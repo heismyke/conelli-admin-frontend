@@ -11,6 +11,7 @@
         <div v-if="error" class="border border-red-200 bg-red-50 px-4 py-3 text-xs text-red-600">{{ error }}</div>
         <div><label class="label mb-2 block">Name</label><input v-model="form.name" class="field" /></div>
         <div><label class="label mb-2 block">Email</label><input v-model="form.email" class="field" type="email" /></div>
+        <div><label class="label mb-2 block">Password</label><input v-model="form.password" class="field" type="password" :placeholder="form.id ? 'Leave blank to keep current password' : 'Required for new users'" /></div>
         <div><label class="label mb-2 block">Role</label><select v-model="form.role" class="field"><option>ADMIN</option><option>STAFF</option></select></div>
         <button class="btn-gold" type="submit" :disabled="saving">{{ saving ? "Saving..." : "Save user" }}</button>
         <button class="btn-outline" type="button" @click="Object.assign(form, blank)">Clear</button>
@@ -27,7 +28,7 @@
             </tr>
           </thead>
           <tbody>
-            <tr v-for="user in state.users" :key="user.id" class="cursor-pointer border-b border-stone-100 hover:bg-stone-50" @click="Object.assign(form, user)">
+            <tr v-for="user in state.users" :key="user.id" class="cursor-pointer border-b border-stone-100 hover:bg-stone-50" @click="selectUser(user)">
               <td class="px-5 py-4 text-sm font-medium text-stone-900">{{ user.name }}</td>
               <td class="px-5 py-4 text-sm text-stone-600">{{ user.email }}</td>
               <td class="px-5 py-4"><span class="badge">{{ user.role }}</span></td>
@@ -44,7 +45,7 @@
 import { reactive, ref } from "vue";
 import { state, store } from "../stores/adminStore";
 
-const blank = { id: "", name: "", email: "", role: "STAFF" };
+const blank = { id: "", name: "", email: "", password: "", role: "STAFF" };
 const form = reactive({ ...blank });
 const saving = ref(false);
 const error = ref("");
@@ -60,6 +61,10 @@ const saveUser = async () => {
   } finally {
     saving.value = false;
   }
+};
+
+const selectUser = (user) => {
+  Object.assign(form, { id: user.id, name: user.name, email: user.email, password: "", role: user.role });
 };
 
 const formatDate = (value) => new Date(value).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });

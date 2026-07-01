@@ -36,7 +36,7 @@
           </div>
           <div>
             <label class="label mb-2 block">Password</label>
-            <input v-model="password" type="password" class="field" placeholder="Any password in dev" required />
+            <input v-model="password" type="password" class="field" placeholder="Password" required />
           </div>
           <div v-if="error" class="border border-red-200 bg-red-50 px-4 py-3 text-xs text-red-600">{{ error }}</div>
           <button type="submit" class="btn-gold w-full" :disabled="loading">{{ loading ? "Signing in..." : "Sign in" }}</button>
@@ -61,6 +61,7 @@ const handleLogin = async () => {
     error.value = "Enter a valid staff email and password.";
     return;
   }
+
   loading.value = true;
   try {
     const payload = await loginStaff({ email: email.value, password: password.value });

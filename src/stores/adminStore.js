@@ -121,7 +121,7 @@ export const saveAdminData = async () => {
 };
 
 export const loginStaff = async (credentials) => {
-  return request("/admin/login", {
+  return request("/auth/login", {
     method: "POST",
     body: JSON.stringify(credentials),
   });
@@ -249,8 +249,15 @@ export const store = {
   async upsertUser(payload) {
     requireText(payload.name, "Name");
     requireText(payload.email, "Email");
-    if (payload.id) Object.assign(state.users.find((item) => item.id === payload.id), payload);
-    else state.users.push({ ...payload, id: uid("user"), passwordHash: "dev", createdAt: nowIso() });
+    if (!payload.id && !String(payload.password || "").trim()) throw new Error("Password is required.");
+    if (payload.id) {
+      const user = state.users.find((item) => item.id === payload.id);
+      const next = { id: payload.id, name: payload.name, email: payload.email, role: payload.role };
+      if (String(payload.password || "").trim()) next.passwordHash = payload.password;
+      Object.assign(user, next);
+    } else {
+      state.users.push({ id: uid("user"), name: payload.name, email: payload.email, role: payload.role, passwordHash: payload.password, createdAt: nowIso() });
+    }
     await saveAdminData();
   },
 };
