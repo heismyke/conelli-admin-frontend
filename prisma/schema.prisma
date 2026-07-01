@@ -1,0 +1,127 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  STAFF
+}
+
+enum InvestorStatus {
+  active
+  inactive
+}
+
+enum MilestoneStatus {
+  pending
+  in_progress
+  done
+}
+
+enum MaterialStatusValue {
+  ordered
+  delivered
+  installed
+}
+
+model User {
+  id           String     @id @default(cuid())
+  name         String
+  email        String     @unique
+  passwordHash String
+  role         Role       @default(STAFF)
+  createdAt    DateTime   @default(now())
+  updates      Update[]
+  documents    Document[] @relation("UploadedDocuments")
+}
+
+model Investor {
+  id                 String             @id @default(cuid())
+  name               String
+  email              String             @unique
+  phone              String?
+  memberSince        DateTime
+  status             InvestorStatus     @default(active)
+  investorProperties InvestorProperty[]
+  documents          Document[]
+}
+
+model Property {
+  id                 String             @id @default(cuid())
+  title              String
+  location           String
+  category           String
+  status             String
+  progressPercent    Int
+  estCompletionDate  DateTime
+  coverImageUrl      String?
+  description        String?
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+  investorProperties InvestorProperty[]
+  updates            Update[]
+  milestones         Milestone[]
+  materialStatuses   MaterialStatus[]
+  documents          Document[]
+}
+
+model InvestorProperty {
+  investorId       String
+  propertyId       String
+  investmentAmount Decimal?
+  investmentDate   DateTime
+  investor         Investor @relation(fields: [investorId], references: [id], onDelete: Cascade)
+  property         Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+
+  @@id([investorId, propertyId])
+}
+
+model Update {
+  id         String   @id @default(cuid())
+  propertyId String
+  title      String
+  body       String
+  postedAt   DateTime @default(now())
+  authorId   String
+  property   Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  author     User     @relation(fields: [authorId], references: [id])
+}
+
+model Milestone {
+  id            String          @id @default(cuid())
+  propertyId    String
+  title         String
+  plannedDate   DateTime
+  completedDate DateTime?
+  status        MilestoneStatus @default(pending)
+  property      Property        @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+}
+
+model MaterialStatus {
+  id           String              @id @default(cuid())
+  propertyId   String
+  materialName String
+  quantity     Float
+  unit         String
+  status       MaterialStatusValue @default(ordered)
+  updatedAt    DateTime            @updatedAt
+  property     Property            @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+}
+
+model Document {
+  id         String    @id @default(cuid())
+  propertyId String?
+  investorId String?
+  title      String
+  fileUrl    String
+  uploadedAt DateTime  @default(now())
+  uploadedBy String
+  property   Property? @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  investor   Investor? @relation(fields: [investorId], references: [id], onDelete: Cascade)
+  uploader   User      @relation("UploadedDocuments", fields: [uploadedBy], references: [id])
+}
