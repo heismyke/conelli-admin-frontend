@@ -2,8 +2,11 @@ import { createRouter, createWebHistory } from "vue-router";
 import DashboardView from "./views/DashboardView.vue";
 import InvestorsView from "./views/InvestorsView.vue";
 import LoginView from "./views/LoginView.vue";
+import MessagesView from "./views/MessagesView.vue";
+import NotificationsView from "./views/NotificationsView.vue";
 import PropertiesView from "./views/PropertiesView.vue";
 import PropertyDetailView from "./views/PropertyDetailView.vue";
+import SettingsView from "./views/SettingsView.vue";
 import UsersView from "./views/UsersView.vue";
 
 const routes = [
@@ -14,6 +17,9 @@ const routes = [
   { path: "/dashboard/properties/:id", component: PropertyDetailView },
   { path: "/dashboard/investors", component: InvestorsView },
   { path: "/dashboard/users", component: UsersView },
+  { path: "/dashboard/settings", component: SettingsView },
+  { path: "/dashboard/messages", component: MessagesView },
+  { path: "/dashboard/notifications", component: NotificationsView },
 ];
 
 export const router = createRouter({

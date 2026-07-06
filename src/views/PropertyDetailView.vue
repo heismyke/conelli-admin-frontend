@@ -12,14 +12,18 @@
     </div>
 
     <div class="grid gap-6 px-6 py-8 lg:grid-cols-[1.2fr_0.8fr] lg:px-10">
-      <form class="card grid gap-4 p-5" @submit.prevent="saveProperty">
+      <form ref="progressSection" class="card grid gap-4 p-5" @submit.prevent="saveProperty">
+        <div class="flex items-center justify-between gap-4">
+          <h2 class="font-display text-xl font-light text-stone-900">Core fields</h2>
+          <button class="text-xs font-semibold text-red-600" type="button" @click="deleteProperty">Delete property</button>
+        </div>
         <div v-if="error" class="border border-red-200 bg-red-50 px-4 py-3 text-xs text-red-600">{{ error }}</div>
         <div class="grid gap-4 lg:grid-cols-2">
           <div><label class="label mb-2 block">Title</label><input v-model="edit.title" class="field" /></div>
           <div><label class="label mb-2 block">Location</label><input v-model="edit.location" class="field" /></div>
           <div><label class="label mb-2 block">Category</label><input v-model="edit.category" class="field" /></div>
           <div><label class="label mb-2 block">Status</label><input v-model="edit.status" class="field" /></div>
-          <div><label class="label mb-2 block">Progress %</label><input v-model.number="edit.progressPercent" type="number" min="0" max="100" class="field" /></div>
+          <div><label class="label mb-2 block">Progress %</label><input ref="progressInput" v-model.number="edit.progressPercent" type="number" min="0" max="100" class="field" /></div>
           <div><label class="label mb-2 block">Est. completion</label><input v-model="edit.estCompletionDate" type="date" class="field" /></div>
         </div>
         <div>
@@ -30,18 +34,24 @@
           </div>
         </div>
         <div><label class="label mb-2 block">Description</label><textarea v-model="edit.description" rows="4" class="field"></textarea></div>
-        <button class="btn-gold justify-self-start" type="submit" :disabled="saving">{{ saving ? "Saving..." : "Save core fields" }}</button>
+        <div class="flex flex-wrap gap-3">
+          <button class="btn-gold" type="submit" :disabled="saving">{{ saving ? "Saving..." : "Save core fields" }}</button>
+          <button class="btn-outline" type="button" @click="resetPropertyForm">Reset changes</button>
+        </div>
       </form>
 
-      <section class="card p-5">
+      <section ref="documentsSection" class="card p-5">
         <h2 class="font-display mb-4 text-xl font-light text-stone-900">Documents</h2>
-        <form class="mb-4 grid gap-3" @submit.prevent="addDocument">
-          <input v-model="docForm.title" class="field" placeholder="Document title" />
+        <form class="mb-4 grid gap-3" @submit.prevent="saveDocument">
+          <input ref="documentInput" v-model="docForm.title" class="field" placeholder="Document title" />
           <input v-model="docForm.fileUrl" class="field" placeholder="File URL or uploaded path" />
           <div class="h-1 overflow-hidden rounded-full bg-stone-100">
             <div class="h-1 bg-stone-900" :style="`width: ${uploadProgress}%`"></div>
           </div>
-          <button class="btn-outline" type="submit">Upload document</button>
+          <div class="grid gap-3 sm:grid-cols-2">
+            <button class="btn-outline" type="submit">{{ docForm.id ? "Save document" : "Upload document" }}</button>
+            <button class="btn-outline" type="button" @click="resetDocumentForm">Clear</button>
+          </div>
         </form>
         <div class="space-y-2">
           <div v-for="doc in documents" :key="doc.id" class="flex items-center justify-between border border-stone-100 px-3 py-2">
@@ -49,19 +59,25 @@
               <p class="truncate text-sm font-medium text-stone-800">{{ doc.title }}</p>
               <p class="text-xs text-stone-400">{{ doc.fileUrl }}</p>
             </div>
-                <button class="text-xs text-red-600" @click="deleteDocument(doc.id)">Delete</button>
+            <div class="flex gap-3 text-xs">
+              <button class="text-stone-600" @click="editDocument(doc)">Edit</button>
+              <button class="text-red-600" @click="deleteDocument(doc.id)">Delete</button>
+            </div>
           </div>
         </div>
       </section>
     </div>
 
-    <div class="grid gap-6 px-6 pb-8 lg:grid-cols-3 lg:px-10">
-      <section class="card p-5">
+    <div class="grid gap-6 px-6 pb-8 lg:grid-cols-2 lg:px-10">
+      <section ref="updatesSection" class="card p-5">
         <h2 class="font-display mb-4 text-xl font-light text-stone-900">Updates</h2>
         <form class="mb-4 grid gap-3" @submit.prevent="saveUpdate">
-          <input v-model="updateForm.title" class="field" placeholder="Update title" />
+          <input ref="updateInput" v-model="updateForm.title" class="field" placeholder="Update title" />
           <textarea v-model="updateForm.body" class="field" rows="3" placeholder="Update body"></textarea>
-          <button class="btn-outline" type="submit">{{ updateForm.id ? "Save update" : "Add update" }}</button>
+          <div class="grid gap-3 sm:grid-cols-2">
+            <button class="btn-outline" type="submit">{{ updateForm.id ? "Save update" : "Add update" }}</button>
+            <button class="btn-outline" type="button" @click="resetUpdateForm">Clear</button>
+          </div>
         </form>
         <div class="space-y-3">
           <article v-for="update in updates" :key="update.id" class="border-b border-stone-100 pb-3">
@@ -85,41 +101,21 @@
             <option value="in_progress">in_progress</option>
             <option value="done">done</option>
           </select>
-          <button class="btn-outline" type="submit">Save milestone</button>
+          <div class="grid gap-3 sm:grid-cols-2">
+            <button class="btn-outline" type="submit">{{ milestoneForm.id ? "Save milestone" : "Add milestone" }}</button>
+            <button class="btn-outline" type="button" @click="resetMilestoneForm">Clear</button>
+          </div>
         </form>
         <div class="space-y-2">
           <div v-for="milestone in milestones" :key="milestone.id" class="border border-stone-100 px-3 py-2">
             <div class="flex items-center justify-between gap-3">
               <p class="text-sm font-medium text-stone-800">{{ milestone.title }}</p>
-              <button class="text-xs text-stone-600" @click="Object.assign(milestoneForm, milestone)">Edit</button>
+              <div class="flex gap-3 text-xs">
+                <button class="text-stone-600" @click="editMilestone(milestone)">Edit</button>
+                <button class="text-red-600" @click="deleteMilestone(milestone.id)">Delete</button>
+              </div>
             </div>
             <p class="mt-1 text-xs text-stone-500">{{ milestone.status }} · {{ milestone.plannedDate }}</p>
-          </div>
-        </div>
-      </section>
-
-      <section class="card p-5">
-        <h2 class="font-display mb-4 text-xl font-light text-stone-900">Materials</h2>
-        <form class="mb-4 grid gap-3" @submit.prevent="saveMaterial">
-          <input v-model="materialForm.materialName" class="field" placeholder="Material" />
-          <div class="grid grid-cols-2 gap-3">
-            <input v-model.number="materialForm.quantity" class="field" type="number" placeholder="Qty" />
-            <input v-model="materialForm.unit" class="field" placeholder="Unit" />
-          </div>
-          <select v-model="materialForm.status" class="field">
-            <option value="ordered">ordered</option>
-            <option value="delivered">delivered</option>
-            <option value="installed">installed</option>
-          </select>
-          <button class="btn-outline" type="submit">Save material</button>
-        </form>
-        <div class="space-y-2">
-          <div v-for="material in materials" :key="material.id" class="border border-stone-100 px-3 py-2">
-            <div class="flex items-center justify-between gap-3">
-              <p class="text-sm font-medium text-stone-800">{{ material.materialName }}</p>
-              <button class="text-xs text-stone-600" @click="Object.assign(materialForm, material)">Edit</button>
-            </div>
-            <p class="mt-1 text-xs text-stone-500">{{ material.quantity }} {{ material.unit }} · {{ material.status }}</p>
           </div>
         </div>
       </section>
@@ -128,33 +124,37 @@
 </template>
 
 <script setup>
-import { computed, reactive, ref, watchEffect } from "vue";
-import { useRoute } from "vue-router";
+import { computed, nextTick, reactive, ref, watch, watchEffect } from "vue";
+import { useRoute, useRouter } from "vue-router";
 import { store } from "../stores/adminStore";
 
 const route = useRoute();
+const router = useRouter();
 const property = computed(() => store.propertyById(route.params.id));
 const edit = reactive({});
 const updateForm = reactive({ id: "", propertyId: "", title: "", body: "" });
 const milestoneForm = reactive({ id: "", propertyId: "", title: "", plannedDate: "", completedDate: null, status: "pending" });
-const materialForm = reactive({ id: "", propertyId: "", materialName: "", quantity: 0, unit: "", status: "ordered" });
-const docForm = reactive({ propertyId: "", investorId: null, title: "", fileUrl: "" });
+const docForm = reactive({ id: "", propertyId: "", investorId: null, title: "", fileUrl: "" });
 const uploadProgress = ref(0);
 const saving = ref(false);
 const error = ref("");
+const progressSection = ref(null);
+const documentsSection = ref(null);
+const updatesSection = ref(null);
+const progressInput = ref(null);
+const documentInput = ref(null);
+const updateInput = ref(null);
 
 watchEffect(() => {
   if (!property.value) return;
   Object.assign(edit, property.value);
   updateForm.propertyId = property.value.id;
   milestoneForm.propertyId = property.value.id;
-  materialForm.propertyId = property.value.id;
   docForm.propertyId = property.value.id;
 });
 
 const updates = computed(() => (property.value ? store.updatesForProperty(property.value.id) : []));
 const milestones = computed(() => (property.value ? store.milestonesForProperty(property.value.id) : []));
-const materials = computed(() => (property.value ? store.materialsForProperty(property.value.id) : []));
 const documents = computed(() => (property.value ? store.documentsForProperty(property.value.id) : []));
 
 const runSave = async (action) => {
@@ -170,24 +170,60 @@ const runSave = async (action) => {
 };
 
 const saveProperty = () => runSave(() => store.updateProperty(property.value.id, edit));
+const resetPropertyForm = () => {
+  if (property.value) Object.assign(edit, property.value);
+};
+const deleteProperty = async () => {
+  const confirmed = window.confirm(`Delete "${property.value.title}"? This also removes related assignments, updates, milestones, and documents.`);
+  if (!confirmed) return;
+  await runSave(() => store.deleteProperty(property.value.id));
+  if (!error.value) router.push("/dashboard/properties");
+};
+const resetUpdateForm = () => Object.assign(updateForm, { id: "", propertyId: property.value.id, title: "", body: "" });
 const saveUpdate = async () => {
   await runSave(() => store.upsertUpdate(updateForm));
-  if (!error.value) Object.assign(updateForm, { id: "", propertyId: property.value.id, title: "", body: "" });
+  if (!error.value) resetUpdateForm();
 };
+const editMilestone = (milestone) => Object.assign(milestoneForm, milestone);
+const resetMilestoneForm = () => Object.assign(milestoneForm, { id: "", propertyId: property.value.id, title: "", plannedDate: "", completedDate: null, status: "pending" });
 const saveMilestone = async () => {
   await runSave(() => store.upsertMilestone(milestoneForm));
-  if (!error.value) Object.assign(milestoneForm, { id: "", propertyId: property.value.id, title: "", plannedDate: "", completedDate: null, status: "pending" });
+  if (!error.value) resetMilestoneForm();
 };
-const saveMaterial = async () => {
-  await runSave(() => store.upsertMaterial(materialForm));
-  if (!error.value) Object.assign(materialForm, { id: "", propertyId: property.value.id, materialName: "", quantity: 0, unit: "", status: "ordered" });
+const deleteMilestone = async (id) => {
+  await runSave(() => store.deleteMilestone(id));
+  if (!error.value && milestoneForm.id === id) resetMilestoneForm();
 };
-const addDocument = async () => {
+const editDocument = (doc) => Object.assign(docForm, { id: doc.id, propertyId: doc.propertyId, investorId: doc.investorId, title: doc.title, fileUrl: doc.fileUrl });
+const resetDocumentForm = () => Object.assign(docForm, { id: "", propertyId: property.value.id, investorId: null, title: "", fileUrl: "" });
+const saveDocument = async () => {
   uploadProgress.value = 100;
-  await runSave(() => store.addDocument(docForm));
-  if (!error.value) Object.assign(docForm, { propertyId: property.value.id, investorId: null, title: "", fileUrl: "" });
+  await runSave(() => store.upsertDocument(docForm));
+  if (!error.value) resetDocumentForm();
   setTimeout(() => (uploadProgress.value = 0), 600);
 };
-const deleteDocument = (id) => runSave(() => store.deleteDocument(id));
-const deleteUpdate = (id) => runSave(() => store.deleteUpdate(id));
+const deleteDocument = async (id) => {
+  await runSave(() => store.deleteDocument(id));
+  if (!error.value && docForm.id === id) resetDocumentForm();
+};
+const deleteUpdate = async (id) => {
+  await runSave(() => store.deleteUpdate(id));
+  if (!error.value && updateForm.id === id) resetUpdateForm();
+};
+
+watch(
+  () => route.query.focus,
+  async (focus) => {
+    await nextTick();
+    const targets = {
+      progress: [progressSection, progressInput],
+      documents: [documentsSection, documentInput],
+      updates: [updatesSection, updateInput],
+    };
+    const [section, input] = targets[focus] || [];
+    section?.value?.scrollIntoView({ behavior: "smooth", block: "start" });
+    input?.value?.focus?.();
+  },
+  { immediate: true },
+);
 </script>

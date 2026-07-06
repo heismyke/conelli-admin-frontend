@@ -8,8 +8,8 @@ const today = () => new Date().toISOString().slice(0, 10);
 
 const seedData = () => ({
   users: [
-    { id: "user_admin", name: "Ada Okafor", email: "admin@conelliengineering.com", passwordHash: "dev", role: "ADMIN", createdAt: "2026-01-08T09:00:00.000Z" },
-    { id: "user_staff", name: "Site Office", email: "staff@conelliengineering.com", passwordHash: "dev", role: "STAFF", createdAt: "2026-01-10T09:00:00.000Z" },
+    { id: "user_admin", name: "Ada Okafor", email: "admin@conelliengineering.com", passwordHash: "dev", role: "ADMIN", profileImageUrl: "", createdAt: "2026-01-08T09:00:00.000Z" },
+    { id: "user_staff", name: "Site Office", email: "staff@conelliengineering.com", passwordHash: "dev", role: "STAFF", profileImageUrl: "", createdAt: "2026-01-10T09:00:00.000Z" },
   ],
   investors: [
     { id: "inv_1", name: "Conelli Partner", email: "partner@conelliengineering.com", phone: "+234 800 000 1001", memberSince: "2022-03-01", status: "active" },
@@ -64,19 +64,13 @@ const seedData = () => ({
   updates: [
     { id: "upd_1", propertyId: "prop_3", title: "Urban water management systems enhanced", body: "Drainage channel checks confirmed stronger runoff control across the active FCDA work areas.", postedAt: "2026-06-22T12:00:00.000Z", authorId: "user_admin" },
     { id: "upd_2", propertyId: "prop_1", title: "Structural works continuing in Lifecamp", body: "The site team completed the latest quality review and confirmed progress against the construction programme.", postedAt: "2026-06-20T12:00:00.000Z", authorId: "user_staff" },
-    { id: "upd_3", propertyId: "prop_2", title: "Foundation material delivery logged", body: "Blockwork and masonry supply has been received for the next foundation work package.", postedAt: "2026-06-18T12:00:00.000Z", authorId: "user_staff" },
+    { id: "upd_3", propertyId: "prop_2", title: "Foundation progress logged", body: "The site team has recorded progress on the next foundation work package.", postedAt: "2026-06-18T12:00:00.000Z", authorId: "user_staff" },
   ],
   milestones: [
     { id: "mile_1", propertyId: "prop_1", title: "Structural Works", plannedDate: "2026-08-30", completedDate: null, status: "in_progress" },
     { id: "mile_2", propertyId: "prop_1", title: "Services Installation", plannedDate: "2026-10-15", completedDate: null, status: "pending" },
     { id: "mile_3", propertyId: "prop_2", title: "Foundation & Structure", plannedDate: "2026-09-15", completedDate: null, status: "in_progress" },
     { id: "mile_4", propertyId: "prop_3", title: "Final Inspection", plannedDate: "2026-08-20", completedDate: null, status: "in_progress" },
-  ],
-  materials: [
-    { id: "mat_1", propertyId: "prop_1", materialName: "Steel Works Package", quantity: 30, unit: "tons", status: "delivered", updatedAt: "2026-06-18T09:00:00.000Z" },
-    { id: "mat_2", propertyId: "prop_1", materialName: "Architectural Finishes", quantity: 240, unit: "sqm", status: "ordered", updatedAt: "2026-06-21T09:00:00.000Z" },
-    { id: "mat_3", propertyId: "prop_2", materialName: "Foundation Materials", quantity: 1, unit: "lot", status: "delivered", updatedAt: "2026-06-17T09:00:00.000Z" },
-    { id: "mat_4", propertyId: "prop_3", materialName: "Access Cover Package", quantity: 64, unit: "units", status: "installed", updatedAt: "2026-06-22T09:00:00.000Z" },
   ],
   documents: [
     { id: "doc_1", propertyId: "prop_1", investorId: null, title: "Progress Summary - Lifecamp Development", fileUrl: "/uploads/lifecamp-summary.pdf", uploadedAt: "2026-06-10T09:00:00.000Z", uploadedBy: "user_admin" },
@@ -102,7 +96,9 @@ const request = async (path, options = {}) => {
 };
 
 const replaceState = (payload) => {
-  Object.assign(state, seedData(), payload || {});
+  const { materials, ...nextPayload } = payload || {};
+  Object.assign(state, seedData(), nextPayload);
+  delete state.materials;
 };
 
 export const loadAdminData = async () => {
@@ -148,7 +144,6 @@ export const store = {
   investorById: (id) => state.investors.find((item) => item.id === id),
   updatesForProperty: (id) => state.updates.filter((item) => item.propertyId === id).sort((a, b) => b.postedAt.localeCompare(a.postedAt)),
   milestonesForProperty: (id) => state.milestones.filter((item) => item.propertyId === id),
-  materialsForProperty: (id) => state.materials.filter((item) => item.propertyId === id),
   documentsForProperty: (id) => state.documents.filter((item) => item.propertyId === id),
   documentsForInvestor: (id) => state.documents.filter((item) => item.investorId === id),
   assignmentsForInvestor: (id) => state.investorProperties.filter((item) => item.investorId === id),
@@ -186,6 +181,17 @@ export const store = {
     await saveAdminData();
   },
 
+  async deleteProperty(id) {
+    const index = state.properties.findIndex((item) => item.id === id);
+    if (index === -1) throw new Error("Property not found.");
+    state.properties.splice(index, 1);
+    state.investorProperties = state.investorProperties.filter((item) => item.propertyId !== id);
+    state.updates = state.updates.filter((item) => item.propertyId !== id);
+    state.milestones = state.milestones.filter((item) => item.propertyId !== id);
+    state.documents = state.documents.filter((item) => item.propertyId !== id);
+    await saveAdminData();
+  },
+
   async upsertUpdate(payload) {
     requireText(payload.title, "Update title");
     requireText(payload.body, "Update body");
@@ -209,21 +215,31 @@ export const store = {
     await saveAdminData();
   },
 
-  async upsertMaterial(payload) {
-    requireText(payload.materialName, "Material");
-    const record = { ...payload, quantity: Number(payload.quantity || 0), updatedAt: nowIso() };
-    if (payload.id) Object.assign(state.materials.find((item) => item.id === payload.id), record);
-    else state.materials.push({ ...record, id: uid("mat") });
-    touchProperty(payload.propertyId);
+  async deleteMilestone(id) {
+    const index = state.milestones.findIndex((item) => item.id === id);
+    if (index === -1) throw new Error("Milestone not found.");
+    const propertyId = state.milestones[index].propertyId;
+    state.milestones.splice(index, 1);
+    touchProperty(propertyId);
+    await saveAdminData();
+  },
+
+  async upsertDocument(payload) {
+    requireText(payload.title, "Document title");
+    requireText(payload.fileUrl, "File URL");
+    if (payload.id) {
+      const document = state.documents.find((item) => item.id === payload.id);
+      if (!document) throw new Error("Document not found.");
+      Object.assign(document, payload);
+    } else {
+      state.documents.unshift({ ...payload, id: uid("doc"), uploadedAt: nowIso(), uploadedBy: state.users[0].id });
+    }
+    if (payload.propertyId) touchProperty(payload.propertyId);
     await saveAdminData();
   },
 
   async addDocument(payload) {
-    requireText(payload.title, "Document title");
-    requireText(payload.fileUrl, "File URL");
-    state.documents.unshift({ ...payload, id: uid("doc"), uploadedAt: nowIso(), uploadedBy: state.users[0].id });
-    if (payload.propertyId) touchProperty(payload.propertyId);
-    await saveAdminData();
+    return this.upsertDocument(payload);
   },
 
   async deleteDocument(id) {
@@ -234,8 +250,25 @@ export const store = {
   async upsertInvestor(payload) {
     requireText(payload.name, "Investor name");
     requireText(payload.email, "Investor email");
-    if (payload.id) Object.assign(state.investors.find((item) => item.id === payload.id), payload);
-    else state.investors.unshift({ ...payload, id: uid("inv"), memberSince: payload.memberSince || today(), status: payload.status || "active" });
+    if (payload.id) {
+      const investor = state.investors.find((item) => item.id === payload.id);
+      if (!investor) throw new Error("Investor not found.");
+      Object.assign(investor, payload);
+      await saveAdminData();
+      return investor;
+    }
+    const record = { ...payload, id: uid("inv"), memberSince: payload.memberSince || today(), status: payload.status || "active" };
+    state.investors.unshift(record);
+    await saveAdminData();
+    return record;
+  },
+
+  async deleteInvestor(id) {
+    const index = state.investors.findIndex((item) => item.id === id);
+    if (index === -1) throw new Error("Investor not found.");
+    state.investors.splice(index, 1);
+    state.investorProperties = state.investorProperties.filter((item) => item.investorId !== id);
+    state.documents = state.documents.filter((item) => item.investorId !== id);
     await saveAdminData();
   },
 
@@ -252,11 +285,28 @@ export const store = {
     if (!payload.id && !String(payload.password || "").trim()) throw new Error("Password is required.");
     if (payload.id) {
       const user = state.users.find((item) => item.id === payload.id);
-      const next = { id: payload.id, name: payload.name, email: payload.email, role: payload.role };
+      if (!user) throw new Error("User not found.");
+      const next = { id: payload.id, name: payload.name, email: payload.email, role: payload.role, profileImageUrl: payload.profileImageUrl || "" };
       if (String(payload.password || "").trim()) next.passwordHash = payload.password;
       Object.assign(user, next);
     } else {
-      state.users.push({ id: uid("user"), name: payload.name, email: payload.email, role: payload.role, passwordHash: payload.password, createdAt: nowIso() });
+      state.users.push({ id: uid("user"), name: payload.name, email: payload.email, role: payload.role, profileImageUrl: payload.profileImageUrl || "", passwordHash: payload.password, createdAt: nowIso() });
+    }
+    await saveAdminData();
+  },
+
+  async deleteUser(id) {
+    const index = state.users.findIndex((item) => item.id === id);
+    if (index === -1) throw new Error("User not found.");
+    const user = state.users[index];
+    const adminCount = state.users.filter((item) => item.role === "ADMIN").length;
+    if (user.role === "ADMIN" && adminCount <= 1) throw new Error("At least one admin user is required.");
+    state.users.splice(index, 1);
+    for (const update of state.updates) {
+      if (update.authorId === id) update.authorId = null;
+    }
+    for (const document of state.documents) {
+      if (document.uploadedBy === id) document.uploadedBy = null;
     }
     await saveAdminData();
   },

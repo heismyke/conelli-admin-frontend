@@ -16,7 +16,7 @@
           Kept current.
         </h2>
         <p class="font-body max-w-sm text-sm leading-relaxed text-white/70">
-          Maintain properties, updates, milestones, materials, and documents for the investor portal.
+          Maintain properties, updates, milestones, and documents for the investor portal.
         </p>
       </div>
       <div></div>
