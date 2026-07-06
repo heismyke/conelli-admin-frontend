@@ -85,8 +85,8 @@
 </template>
 
 <script setup>
-import { computed, reactive, ref } from "vue";
-import { useRouter } from "vue-router";
+import { computed, reactive, ref, watch } from "vue";
+import { useRoute, useRouter } from "vue-router";
 import { Plus } from "@lucide/vue";
 import { state, store } from "../stores/adminStore";
 
@@ -96,11 +96,20 @@ const categoryFilter = ref("");
 const saving = ref(false);
 const error = ref("");
 const router = useRouter();
+const route = useRoute();
 const form = reactive({ title: "", location: "", category: "Real Estate Development", status: "Under Construction", progressPercent: 0, estCompletionDate: "", coverImageUrl: "", description: "" });
 
 const statuses = computed(() => [...new Set(state.properties.map((item) => item.status))]);
 const categories = computed(() => [...new Set(state.properties.map((item) => item.category))]);
 const filtered = computed(() => state.properties.filter((item) => (!statusFilter.value || item.status === statusFilter.value) && (!categoryFilter.value || item.category === categoryFilter.value)));
+
+watch(
+  () => route.query.mode,
+  (mode) => {
+    if (mode === "create") showCreate.value = true;
+  },
+  { immediate: true },
+);
 
 const createProperty = async () => {
   saving.value = true;

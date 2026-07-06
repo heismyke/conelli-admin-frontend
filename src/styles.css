@@ -178,6 +178,7 @@ button {
   display: flex;
   align-items: center;
   gap: 0.8rem;
+  margin-block: 0.25rem;
   border-radius: 999px;
   padding: 0.82rem 1rem;
   font-size: 0.9rem;
@@ -189,7 +190,7 @@ button {
 .nav-link-active {
   background: #111827;
   color: #ffffff;
-  box-shadow: 0 16px 34px rgb(17 24 39 / 0.2);
+  box-shadow: 0 10px 24px rgb(17 24 39 / 0.16);
 }
 
 .nav-link-active {
