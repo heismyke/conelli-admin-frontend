@@ -186,6 +186,18 @@ export const store = {
     await saveAdminData();
   },
 
+  async deleteProperty(id) {
+    const index = state.properties.findIndex((item) => item.id === id);
+    if (index === -1) throw new Error("Property not found.");
+    state.properties.splice(index, 1);
+    state.investorProperties = state.investorProperties.filter((item) => item.propertyId !== id);
+    state.updates = state.updates.filter((item) => item.propertyId !== id);
+    state.milestones = state.milestones.filter((item) => item.propertyId !== id);
+    state.materials = state.materials.filter((item) => item.propertyId !== id);
+    state.documents = state.documents.filter((item) => item.propertyId !== id);
+    await saveAdminData();
+  },
+
   async upsertUpdate(payload) {
     requireText(payload.title, "Update title");
     requireText(payload.body, "Update body");

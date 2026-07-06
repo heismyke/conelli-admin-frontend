@@ -6,7 +6,7 @@
           <h1 class="font-display text-3xl font-light text-stone-900">Properties</h1>
           <p class="mt-1 text-sm text-stone-500">Create and maintain investor-facing project records.</p>
         </div>
-        <button class="btn-gold" @click="showCreate = !showCreate">
+        <button class="btn-gold" @click="startCreate">
           <Plus class="h-4 w-4" />
           Create property
         </button>
@@ -14,26 +14,62 @@
     </div>
 
     <div class="px-6 py-8 lg:px-10">
-      <form v-if="showCreate" class="card mb-6 grid gap-4 p-5 lg:grid-cols-4" @submit.prevent="createProperty">
-        <div v-if="error" class="border border-red-200 bg-red-50 px-4 py-3 text-xs text-red-600 lg:col-span-4">{{ error }}</div>
-        <input v-model="form.title" class="field lg:col-span-2" placeholder="Title" />
-        <input v-model="form.location" class="field" placeholder="Location" />
-        <select v-model="form.category" class="field">
-          <option>Real Estate Development</option>
-          <option>Residential Development</option>
-          <option>Infrastructure</option>
-        </select>
-        <select v-model="form.status" class="field">
-          <option>Under Construction</option>
-          <option>Foundation Phase</option>
-          <option>Finishing Works</option>
-          <option>Completed</option>
-        </select>
-        <input v-model.number="form.progressPercent" class="field" min="0" max="100" type="number" placeholder="Progress %" />
-        <input v-model="form.estCompletionDate" class="field" type="date" />
-        <input v-model="form.coverImageUrl" class="field" placeholder="Cover image URL" />
-        <textarea v-model="form.description" class="field lg:col-span-3" rows="2" placeholder="Description"></textarea>
-        <button class="btn-gold" type="submit" :disabled="saving">{{ saving ? "Saving..." : "Save property" }}</button>
+      <form v-if="showForm" class="card mb-6 grid gap-4 p-5 lg:grid-cols-4" @submit.prevent="saveProperty">
+        <div class="flex items-center justify-between lg:col-span-4">
+          <div>
+            <p class="label mb-1">{{ editingId ? "Edit property" : "New property" }}</p>
+            <h2 class="text-xl font-semibold text-stone-950">{{ editingId ? form.title || "Update property" : "Create property" }}</h2>
+          </div>
+          <button class="btn-outline min-h-10 px-4 text-[10px]" type="button" @click="resetForm">
+            <X class="h-4 w-4" />
+            Close
+          </button>
+        </div>
+
+        <div v-if="error" class="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-xs text-red-600 lg:col-span-4">{{ error }}</div>
+
+        <label class="lg:col-span-2">
+          <span class="label mb-2 block">Title</span>
+          <input v-model="form.title" class="field" placeholder="Property title" />
+        </label>
+        <label>
+          <span class="label mb-2 block">Location</span>
+          <input v-model="form.location" class="field" placeholder="Location" />
+        </label>
+        <label>
+          <span class="label mb-2 block">Category</span>
+          <select v-model="form.category" class="field">
+            <option v-for="category in categoryOptions" :key="category">{{ category }}</option>
+          </select>
+        </label>
+        <label>
+          <span class="label mb-2 block">Status</span>
+          <select v-model="form.status" class="field">
+            <option v-for="status in statusOptions" :key="status">{{ status }}</option>
+          </select>
+        </label>
+        <label>
+          <span class="label mb-2 block">Progress</span>
+          <input v-model.number="form.progressPercent" class="field" min="0" max="100" type="number" placeholder="Progress %" />
+        </label>
+        <label>
+          <span class="label mb-2 block">Est. completion</span>
+          <input v-model="form.estCompletionDate" class="field" type="date" />
+        </label>
+        <label>
+          <span class="label mb-2 block">Cover image</span>
+          <input v-model="form.coverImageUrl" class="field" placeholder="Cover image URL" />
+        </label>
+        <label class="lg:col-span-3">
+          <span class="label mb-2 block">Description</span>
+          <textarea v-model="form.description" class="field" rows="2" placeholder="Description"></textarea>
+        </label>
+        <div class="flex items-end gap-3">
+          <button class="btn-gold w-full" type="submit" :disabled="saving">
+            <Save class="h-4 w-4" />
+            {{ saving ? "Saving..." : editingId ? "Update property" : "Save property" }}
+          </button>
+        </div>
       </form>
 
       <div class="mb-5 flex flex-col gap-3 lg:flex-row">
@@ -49,7 +85,7 @@
 
       <div class="card overflow-hidden">
         <div class="overflow-x-auto">
-          <table class="w-full min-w-[920px]">
+          <table class="w-full min-w-[1040px]">
             <thead class="bg-stone-50">
               <tr class="border-b border-stone-200">
                 <th class="label px-5 py-3 text-left">Title</th>
@@ -58,10 +94,11 @@
                 <th class="label px-5 py-3 text-left">Status</th>
                 <th class="label px-5 py-3 text-left">Progress</th>
                 <th class="label px-5 py-3 text-left">Updated</th>
+                <th class="label px-5 py-3 text-right">Actions</th>
               </tr>
             </thead>
             <tbody>
-              <tr v-for="property in filtered" :key="property.id" class="cursor-pointer border-b border-stone-100 hover:bg-stone-50/70" @click="$router.push(`/dashboard/properties/${property.id}`)">
+              <tr v-for="property in filtered" :key="property.id" class="border-b border-stone-100 last:border-0 hover:bg-stone-50/70">
                 <td class="px-5 py-4 text-sm font-medium text-stone-900">{{ property.title }}</td>
                 <td class="px-5 py-4 text-sm text-stone-600">{{ property.location }}</td>
                 <td class="px-5 py-4 text-sm text-stone-600">{{ property.category }}</td>
@@ -75,9 +112,32 @@
                   </div>
                 </td>
                 <td class="px-5 py-4 text-xs text-stone-500">{{ formatDate(property.updatedAt) }}</td>
+                <td class="px-5 py-4">
+                  <div class="flex justify-end gap-2">
+                    <button class="icon-btn h-10 w-10" type="button" title="View property" @click="$router.push(`/dashboard/properties/${property.id}`)">
+                      <Eye class="h-4 w-4" />
+                    </button>
+                    <button class="icon-btn h-10 w-10" type="button" title="Edit property" @click="startEdit(property)">
+                      <Pencil class="h-4 w-4" />
+                    </button>
+                    <button
+                      class="icon-btn h-10 w-10 text-red-600 hover:border-red-200 hover:bg-red-50"
+                      type="button"
+                      title="Delete property"
+                      :disabled="deletingId === property.id"
+                      @click="deleteProperty(property)"
+                    >
+                      <Trash2 class="h-4 w-4" />
+                    </button>
+                  </div>
+                </td>
               </tr>
             </tbody>
           </table>
+        </div>
+
+        <div v-if="filtered.length === 0" class="px-5 py-12 text-center">
+          <p class="text-sm text-stone-500">No properties match the selected filters.</p>
         </div>
       </div>
     </div>
@@ -86,34 +146,109 @@
 
 <script setup>
 import { computed, reactive, ref } from "vue";
-import { useRouter } from "vue-router";
-import { Plus } from "@lucide/vue";
+import { Eye, Pencil, Plus, Save, Trash2, X } from "@lucide/vue";
 import { state, store } from "../stores/adminStore";
 
-const showCreate = ref(false);
+const blankForm = () => ({
+  title: "",
+  location: "",
+  category: "Real Estate Development",
+  status: "Under Construction",
+  progressPercent: 0,
+  estCompletionDate: "",
+  coverImageUrl: "",
+  description: "",
+});
+
+const categoryOptions = ["Real Estate Development", "Residential Development", "Infrastructure"];
+const statusOptions = ["Under Construction", "Foundation Phase", "Finishing Works", "Completed"];
+
+const showForm = ref(false);
+const editingId = ref("");
 const statusFilter = ref("");
 const categoryFilter = ref("");
 const saving = ref(false);
+const deletingId = ref("");
 const error = ref("");
-const router = useRouter();
-const form = reactive({ title: "", location: "", category: "Real Estate Development", status: "Under Construction", progressPercent: 0, estCompletionDate: "", coverImageUrl: "", description: "" });
+const form = reactive(blankForm());
 
-const statuses = computed(() => [...new Set(state.properties.map((item) => item.status))]);
-const categories = computed(() => [...new Set(state.properties.map((item) => item.category))]);
+const statuses = computed(() => [...new Set([...statusOptions, ...state.properties.map((item) => item.status)])]);
+const categories = computed(() => [...new Set([...categoryOptions, ...state.properties.map((item) => item.category)])]);
 const filtered = computed(() => state.properties.filter((item) => (!statusFilter.value || item.status === statusFilter.value) && (!categoryFilter.value || item.category === categoryFilter.value)));
 
-const createProperty = async () => {
+const fillForm = (payload) => {
+  Object.assign(form, blankForm(), payload);
+};
+
+const startCreate = () => {
+  editingId.value = "";
+  error.value = "";
+  fillForm(blankForm());
+  showForm.value = true;
+};
+
+const startEdit = (property) => {
+  editingId.value = property.id;
+  error.value = "";
+  fillForm({
+    title: property.title,
+    location: property.location,
+    category: property.category,
+    status: property.status,
+    progressPercent: property.progressPercent,
+    estCompletionDate: property.estCompletionDate,
+    coverImageUrl: property.coverImageUrl,
+    description: property.description,
+  });
+  showForm.value = true;
+};
+
+const resetForm = () => {
+  showForm.value = false;
+  editingId.value = "";
+  error.value = "";
+  fillForm(blankForm());
+};
+
+const propertyPayload = () => ({
+  title: form.title,
+  location: form.location,
+  category: form.category,
+  status: form.status,
+  progressPercent: Math.max(0, Math.min(100, Number(form.progressPercent || 0))),
+  estCompletionDate: form.estCompletionDate,
+  coverImageUrl: form.coverImageUrl,
+  description: form.description,
+});
+
+const saveProperty = async () => {
   saving.value = true;
   error.value = "";
   try {
-    const created = await store.createProperty(form);
-    Object.assign(form, { title: "", location: "", category: "Real Estate Development", status: "Under Construction", progressPercent: 0, estCompletionDate: "", coverImageUrl: "", description: "" });
-    showCreate.value = false;
-    router.push(`/dashboard/properties/${created.id}`);
+    if (editingId.value) await store.updateProperty(editingId.value, propertyPayload());
+    else await store.createProperty(propertyPayload());
+    resetForm();
   } catch (err) {
     error.value = err.message || "Unable to save property.";
   } finally {
     saving.value = false;
+  }
+};
+
+const deleteProperty = async (property) => {
+  const confirmed = window.confirm(`Delete "${property.title}"? This also removes its investor assignments, updates, milestones, materials, and property documents.`);
+  if (!confirmed) return;
+
+  deletingId.value = property.id;
+  error.value = "";
+  try {
+    await store.deleteProperty(property.id);
+    if (editingId.value === property.id) resetForm();
+  } catch (err) {
+    error.value = err.message || "Unable to delete property.";
+    showForm.value = true;
+  } finally {
+    deletingId.value = "";
   }
 };
 
