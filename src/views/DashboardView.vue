@@ -105,14 +105,11 @@
     </div>
 
     <div class="px-5 pb-10 lg:px-0">
-      <div class="mb-4 flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
+      <div class="mb-4">
         <div>
           <h2 class="text-2xl font-semibold tracking-tight text-slate-950">Activity Timeline</h2>
           <p class="text-sm text-slate-500">{{ timelineTitle }}</p>
         </div>
-        <button class="w-fit rounded-full border border-slate-200 bg-white px-4 py-2 text-xs font-semibold uppercase tracking-[0.16em] text-slate-700 shadow-sm hover:border-slate-950" type="button" @click="showTimelinePicker = true">
-          Change date
-        </button>
       </div>
       <div class="grid gap-5 xl:grid-cols-3">
         <section class="card overflow-hidden">
