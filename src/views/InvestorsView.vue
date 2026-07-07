@@ -1,6 +1,6 @@
 <template>
-  <main class="flex-1 overflow-auto bg-stone-50">
-    <div class="border-b border-stone-200 bg-white px-6 py-6 lg:px-10">
+  <main class="flex min-h-[calc(100dvh-1.4rem)] flex-1 flex-col overflow-auto bg-stone-50">
+    <div class="shrink-0 border-b border-stone-200 bg-white px-6 py-6 lg:px-10">
       <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
         <div>
           <h1 class="font-display text-3xl font-light text-stone-900">Investors</h1>
@@ -13,9 +13,9 @@
       </div>
     </div>
 
-    <div class="grid gap-6 px-6 py-8 lg:grid-cols-[0.9fr_1.1fr] lg:px-10">
-      <div class="card overflow-hidden">
-        <div class="overflow-x-auto">
+    <div class="grid flex-1 gap-6 px-6 py-8 lg:min-h-0 lg:grid-cols-[0.9fr_1.1fr] lg:px-10">
+      <div class="card flex min-h-[360px] overflow-hidden lg:min-h-0">
+        <div class="w-full overflow-x-auto">
           <table class="w-full min-w-[720px]">
             <thead class="bg-stone-50">
               <tr class="border-b border-stone-200">
@@ -64,7 +64,7 @@
         </div>
       </div>
 
-      <section class="card p-5">
+      <section class="card flex min-h-[520px] flex-col overflow-hidden p-5 lg:min-h-0">
         <div class="mb-4 flex items-center justify-between gap-4">
           <div>
             <p class="label mb-1">{{ form.id ? "Edit investor" : "New investor" }}</p>
@@ -76,76 +76,78 @@
           </button>
         </div>
 
-        <form class="mb-6 grid gap-4 lg:grid-cols-2" @submit.prevent="saveInvestor">
-          <div v-if="error" class="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-xs text-red-600 lg:col-span-2">{{ error }}</div>
-          <label>
-            <span class="label mb-2 block">Name</span>
-            <input v-model="form.name" class="field" placeholder="Investor name" />
-          </label>
-          <label>
-            <span class="label mb-2 block">Email</span>
-            <input v-model="form.email" class="field" type="email" placeholder="email@example.com" />
-          </label>
-          <label>
-            <span class="label mb-2 block">Phone</span>
-            <input v-model="form.phone" class="field" placeholder="+234..." />
-          </label>
-          <label>
-            <span class="label mb-2 block">Member since</span>
-            <input v-model="form.memberSince" class="field" type="date" />
-          </label>
-          <label>
-            <span class="label mb-2 block">Status</span>
-            <select v-model="form.status" class="field">
-              <option>active</option>
-              <option>inactive</option>
-            </select>
-          </label>
-          <button class="btn-gold self-end" type="submit" :disabled="saving">
-            <Save class="h-4 w-4" />
-            {{ saving ? "Saving..." : form.id ? "Update investor" : "Save investor" }}
-          </button>
-        </form>
+        <div class="min-h-0 flex-1 overflow-y-auto pr-1">
+          <form class="mb-6 grid gap-4 lg:grid-cols-2" @submit.prevent="saveInvestor">
+            <div v-if="error" class="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-xs text-red-600 lg:col-span-2">{{ error }}</div>
+            <label>
+              <span class="label mb-2 block">Name</span>
+              <input v-model="form.name" class="field" placeholder="Investor name" />
+            </label>
+            <label>
+              <span class="label mb-2 block">Email</span>
+              <input v-model="form.email" class="field" type="email" placeholder="email@example.com" />
+            </label>
+            <label>
+              <span class="label mb-2 block">Phone</span>
+              <input v-model="form.phone" class="field" placeholder="+234..." />
+            </label>
+            <label>
+              <span class="label mb-2 block">Member since</span>
+              <input v-model="form.memberSince" class="field" type="date" />
+            </label>
+            <label>
+              <span class="label mb-2 block">Status</span>
+              <select v-model="form.status" class="field">
+                <option>active</option>
+                <option>inactive</option>
+              </select>
+            </label>
+            <button class="btn-gold self-end" type="submit" :disabled="saving">
+              <Save class="h-4 w-4" />
+              {{ saving ? "Saving..." : form.id ? "Update investor" : "Save investor" }}
+            </button>
+          </form>
 
-        <div v-if="form.id" class="grid gap-6 lg:grid-cols-2">
-          <div>
-            <h3 class="label mb-3">Property access</h3>
-            <div class="space-y-2">
-              <label v-for="property in state.properties" :key="property.id" class="flex items-start gap-3 border border-stone-100 px-3 py-2">
-                <input class="mt-1" type="checkbox" :checked="isAssigned(property.id)" @change="toggleProperty(property.id, $event.target.checked)" />
-                <span>
-                  <span class="block text-sm font-medium text-stone-800">{{ property.title }}</span>
-                  <span class="text-xs text-stone-500">{{ property.location }}</span>
-                </span>
-              </label>
-            </div>
-          </div>
-
-          <div>
-            <h3 class="label mb-3">Investor documents</h3>
-            <form class="mb-3 grid gap-3" @submit.prevent="addInvestorDocument">
-              <input v-model="docForm.title" class="field" placeholder="Document title" />
-              <input v-model="docForm.fileUrl" class="field" placeholder="File URL" />
-              <button class="btn-outline" type="submit">
-                <Upload class="h-4 w-4" />
-                Upload document
-              </button>
-            </form>
-            <div class="space-y-2">
-              <div v-for="doc in investorDocuments" :key="doc.id" class="flex items-center justify-between gap-4 border border-stone-100 px-3 py-2">
-                <div class="min-w-0">
-                  <p class="truncate text-sm font-medium text-stone-800">{{ doc.title }}</p>
-                  <p class="truncate text-xs text-stone-500">{{ doc.fileUrl }}</p>
-                </div>
-                <button class="text-xs font-semibold text-red-600" type="button" @click="deleteDocument(doc.id)">Delete</button>
+          <div v-if="form.id" class="grid gap-6 lg:grid-cols-2">
+            <div>
+              <h3 class="label mb-3">Property access</h3>
+              <div class="space-y-2">
+                <label v-for="property in state.properties" :key="property.id" class="flex items-start gap-3 border border-stone-100 px-3 py-2">
+                  <input class="mt-1" type="checkbox" :checked="isAssigned(property.id)" @change="toggleProperty(property.id, $event.target.checked)" />
+                  <span>
+                    <span class="block text-sm font-medium text-stone-800">{{ property.title }}</span>
+                    <span class="text-xs text-stone-500">{{ property.location }}</span>
+                  </span>
+                </label>
               </div>
-              <p v-if="investorDocuments.length === 0" class="text-xs text-stone-500">No investor documents uploaded.</p>
+            </div>
+
+            <div>
+              <h3 class="label mb-3">Investor documents</h3>
+              <form class="mb-3 grid gap-3" @submit.prevent="addInvestorDocument">
+                <input v-model="docForm.title" class="field" placeholder="Document title" />
+                <input v-model="docForm.fileUrl" class="field" placeholder="File URL" />
+                <button class="btn-outline" type="submit">
+                  <Upload class="h-4 w-4" />
+                  Upload document
+                </button>
+              </form>
+              <div class="space-y-2">
+                <div v-for="doc in investorDocuments" :key="doc.id" class="flex items-center justify-between gap-4 border border-stone-100 px-3 py-2">
+                  <div class="min-w-0">
+                    <p class="truncate text-sm font-medium text-stone-800">{{ doc.title }}</p>
+                    <p class="truncate text-xs text-stone-500">{{ doc.fileUrl }}</p>
+                  </div>
+                  <button class="text-xs font-semibold text-red-600" type="button" @click="deleteDocument(doc.id)">Delete</button>
+                </div>
+                <p v-if="investorDocuments.length === 0" class="text-xs text-stone-500">No investor documents uploaded.</p>
+              </div>
             </div>
           </div>
-        </div>
 
-        <div v-else class="rounded-2xl border border-stone-100 bg-stone-50 px-4 py-5 text-sm text-stone-500">
-          Save the investor before assigning property access or uploading investor documents.
+          <div v-else class="rounded-2xl border border-stone-100 bg-stone-50 px-4 py-5 text-sm text-stone-500">
+            Save the investor before assigning property access or uploading investor documents.
+          </div>
         </div>
       </section>
     </div>
