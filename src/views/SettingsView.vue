@@ -49,10 +49,11 @@
           </label>
           <label>
             <span class="label mb-2 block">Role</span>
-            <select v-model="form.role" class="field">
+            <select v-model="form.role" class="field" :disabled="!isAdmin">
               <option>ADMIN</option>
               <option>STAFF</option>
             </select>
+            <p class="mt-2 text-xs leading-5 text-stone-500">{{ isAdmin ? "Admins can change their own role here. Use Staff Users for other accounts." : "Only admins can change account roles." }}</p>
           </label>
 
           <button class="btn-gold justify-self-start" type="submit" :disabled="saving">
@@ -67,7 +68,7 @@
 <script setup>
 import { computed, reactive, ref, watchEffect } from "vue";
 import { Moon, Sun } from "@lucide/vue";
-import { store } from "../stores/adminStore";
+import { isAdmin, store } from "../stores/adminStore";
 
 defineEmits(["toggle-theme"]);
 defineProps({
@@ -110,7 +111,7 @@ const saveProfile = async () => {
   saved.value = false;
   error.value = "";
   try {
-    await store.upsertUser({ ...form });
+    await store.upsertUser({ ...form, role: isAdmin.value ? form.role : currentUser.value.role });
     saved.value = true;
     form.password = "";
   } catch (err) {

@@ -24,7 +24,7 @@
 
       <div class="sidebar-section-label">Admin</div>
 
-      <router-link to="/dashboard/users" class="nav-link" active-class="nav-link-active">
+      <router-link v-if="isAdmin" to="/dashboard/users" class="nav-link" active-class="nav-link-active">
         <UserCog class="h-4 w-4" />
         Staff Users
       </router-link>
@@ -70,7 +70,7 @@
 <script setup>
 import { computed } from "vue";
 import { Bell, Building2, LayoutDashboard, LogOut, MessageSquare, Moon, Sun, UserCog, Users } from "@lucide/vue";
-import { store } from "../stores/adminStore";
+import { isAdmin, store } from "../stores/adminStore";
 import { realtimeState } from "../stores/realtimeStore";
 
 defineEmits(["logout", "toggle-theme"]);

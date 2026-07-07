@@ -1,6 +1,16 @@
 import { computed, reactive } from "vue";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || (import.meta.env.PROD ? "/api" : "http://localhost:8000");
+const authKey = "conelli_admin_auth";
+
+const readStoredAuth = () => {
+  try {
+    return JSON.parse(localStorage.getItem(authKey) || "null");
+  } catch {
+    return null;
+  }
+};
+
 
 const uid = (prefix) => `${prefix}_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
 const nowIso = () => new Date().toISOString();
@@ -109,6 +119,16 @@ const seedData = () => ({
 });
 
 export const state = reactive(seedData());
+export const authState = reactive({ user: readStoredAuth() });
+export const setCurrentUser = (user) => {
+  authState.user = user || null;
+  if (authState.user) localStorage.setItem(authKey, JSON.stringify(authState.user));
+};
+export const clearCurrentUser = () => {
+  authState.user = null;
+  localStorage.removeItem(authKey);
+};
+export const isAdmin = computed(() => String(authState.user?.role || "").toUpperCase() === "ADMIN");
 
 const jsonClone = (value) => JSON.parse(JSON.stringify(value));
 
@@ -192,7 +212,11 @@ const touchProperty = (id) => {
 
 export const store = {
   state,
-  currentUser: computed(() => state.users[0]),
+  currentUser: computed(() => {
+    const authUser = authState.user;
+    if (!authUser) return state.users[0];
+    return state.users.find((user) => user.id === authUser.id || user.email === authUser.email) || authUser;
+  }),
   propertyById: (id) => state.properties.find((item) => item.id === id),
   investorById: (id) => state.investors.find((item) => item.id === id),
   updatesForProperty: (id) => state.updates.filter((item) => item.propertyId === id).sort((a, b) => b.postedAt.localeCompare(a.postedAt)),
