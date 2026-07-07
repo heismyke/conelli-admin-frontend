@@ -6,9 +6,43 @@
           <div class="h-14 w-14 overflow-hidden rounded-full border-2 border-white/25 bg-white">
             <img src="/assets/home.png" alt="" class="h-full w-full object-cover" />
           </div>
-          <div class="flex h-12 items-center gap-2 rounded-full border border-white/15 bg-white/10 px-4 text-sm text-white/80">
-            <CalendarDays class="h-4 w-4" />
-            {{ shortDate }}
+          <div class="relative">
+            <button class="flex h-12 items-center gap-2 rounded-full border border-white/15 bg-white/10 px-4 text-sm font-semibold text-white/80 transition hover:bg-white/15" type="button" @click="showTimelinePicker = !showTimelinePicker">
+              <CalendarDays class="h-4 w-4" />
+              {{ shortDate }}
+            </button>
+            <div v-if="showTimelinePicker" class="absolute left-0 top-14 z-30 w-80 rounded-[1.75rem] border border-white/10 bg-white p-4 text-slate-950 shadow-2xl shadow-slate-950/30">
+              <div class="mb-3 flex items-center justify-between">
+                <div>
+                  <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Timeline</p>
+                  <p class="text-base font-semibold">{{ timelineTitle }}</p>
+                </div>
+                <button class="grid h-9 w-9 place-items-center rounded-full border border-slate-200 hover:bg-slate-50" type="button" @click="showTimelinePicker = false">
+                  <X class="h-4 w-4" />
+                </button>
+              </div>
+
+              <div class="mb-3 grid grid-cols-3 gap-2">
+                <button v-for="preset in timelinePresets" :key="preset.label" class="rounded-full border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-700 transition hover:border-slate-950 hover:text-slate-950" type="button" @click="preset.apply">
+                  {{ preset.label }}
+                </button>
+              </div>
+
+              <div class="mb-3 grid grid-cols-2 gap-2 rounded-full bg-slate-100 p-1">
+                <button class="rounded-full px-3 py-2 text-xs font-semibold transition" :class="timelineMode === 'day' ? 'bg-white text-slate-950 shadow-sm' : 'text-slate-500'" type="button" @click="timelineMode = 'day'">Day</button>
+                <button class="rounded-full px-3 py-2 text-xs font-semibold transition" :class="timelineMode === 'week' ? 'bg-white text-slate-950 shadow-sm' : 'text-slate-500'" type="button" @click="timelineMode = 'week'">Last 7 days</button>
+              </div>
+
+              <div class="flex items-center gap-2">
+                <button class="grid h-11 w-11 place-items-center rounded-full border border-slate-200 hover:bg-slate-50" type="button" @click="shiftTimeline(-1)">
+                  <ChevronLeft class="h-4 w-4" />
+                </button>
+                <input v-model="selectedDate" class="h-11 min-w-0 flex-1 rounded-full border border-slate-200 px-4 text-sm font-semibold text-slate-900 outline-none focus:border-slate-900" type="date" />
+                <button class="grid h-11 w-11 place-items-center rounded-full border border-slate-200 hover:bg-slate-50" type="button" @click="shiftTimeline(1)">
+                  <ChevronRight class="h-4 w-4" />
+                </button>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -71,7 +105,15 @@
     </div>
 
     <div class="px-5 pb-10 lg:px-0">
-      <h2 class="mb-4 text-2xl font-semibold tracking-tight text-slate-950">Recent Activity</h2>
+      <div class="mb-4 flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <h2 class="text-2xl font-semibold tracking-tight text-slate-950">Activity Timeline</h2>
+          <p class="text-sm text-slate-500">{{ timelineTitle }}</p>
+        </div>
+        <button class="w-fit rounded-full border border-slate-200 bg-white px-4 py-2 text-xs font-semibold uppercase tracking-[0.16em] text-slate-700 shadow-sm hover:border-slate-950" type="button" @click="showTimelinePicker = true">
+          Change date
+        </button>
+      </div>
       <div class="grid gap-5 xl:grid-cols-3">
         <section class="card overflow-hidden">
           <button class="flex w-full items-center justify-between border-b border-slate-100 px-5 py-4 text-left" @click="$router.push('/dashboard/properties')">
@@ -115,7 +157,7 @@
             <ChevronRight class="h-5 w-5" />
           </button>
           <div class="p-4">
-            <button v-for="update in recentUpdates.slice(0, 4)" :key="update.id" class="flex w-full items-start gap-4 rounded-2xl px-2 py-3 text-left hover:bg-slate-50" @click="$router.push(updatePropertyPath(update.propertyId, 'updates'))">
+            <button v-for="update in timelineUpdates.slice(0, 4)" :key="update.id" class="flex w-full items-start gap-4 rounded-2xl px-2 py-3 text-left hover:bg-slate-50" @click="$router.push(updatePropertyPath(update.propertyId, 'updates'))">
               <div class="grid h-12 w-12 flex-shrink-0 place-items-center rounded-2xl bg-slate-100">
                 <FileText class="h-6 w-6 text-slate-900" />
               </div>
@@ -125,6 +167,9 @@
               </div>
               <span class="text-xs text-slate-400">{{ formatShort(update.postedAt) }}</span>
             </button>
+            <div v-if="!timelineUpdates.length" class="rounded-2xl border border-dashed border-slate-200 px-4 py-8 text-center text-sm text-slate-500">
+              No updates recorded for this timeline.
+            </div>
           </div>
         </section>
       </div>
@@ -135,7 +180,7 @@
 <script setup>
 import { computed, ref } from "vue";
 import { useRouter } from "vue-router";
-import { Bell, Building2, CalendarDays, ChevronRight, ClipboardList, FileText, FolderPlus, Gauge, Pencil, Plus, Search, Upload, UserPlus, Users } from "@lucide/vue";
+import { Bell, Building2, CalendarDays, ChevronLeft, ChevronRight, ClipboardList, FileText, FolderPlus, Gauge, Pencil, Plus, Search, Upload, UserPlus, Users, X } from "@lucide/vue";
 import { state, store } from "../stores/adminStore";
 
 const router = useRouter();
@@ -145,9 +190,61 @@ const avgProgress = computed(() => Math.round(properties.value.reduce((sum, item
 const recentUpdates = computed(() => [...state.updates].sort((a, b) => b.postedAt.localeCompare(a.postedAt)).slice(0, 10));
 const firstName = computed(() => store.currentUser.value.name.split(" ")[0]);
 const searchTerm = ref("");
+const showTimelinePicker = ref(false);
+const selectedDate = ref(new Date().toISOString().slice(0, 10));
+const timelineMode = ref("day");
 
-const shortDate = new Date().toLocaleDateString("en-GB", { day: "numeric", month: "short" });
+const parseSelectedDate = () => {
+  const [year, month, day] = selectedDate.value.split("-").map(Number);
+  return new Date(year, month - 1, day);
+};
+
+const toDateInputValue = (date) => {
+  const offset = date.getTimezoneOffset() * 60000;
+  return new Date(date.getTime() - offset).toISOString().slice(0, 10);
+};
+
+const shortDate = computed(() => parseSelectedDate().toLocaleDateString("en-GB", { day: "numeric", month: "short" }));
+const timelineRange = computed(() => {
+  const end = parseSelectedDate();
+  end.setHours(23, 59, 59, 999);
+  const start = new Date(end);
+  start.setHours(0, 0, 0, 0);
+  if (timelineMode.value === "week") start.setDate(start.getDate() - 6);
+  return { start, end };
+});
+const timelineTitle = computed(() => {
+  const { start, end } = timelineRange.value;
+  const longDate = (date) => date.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
+  if (timelineMode.value === "day") return `Showing activity for ${longDate(end)}`;
+  return `Showing activity from ${longDate(start)} to ${longDate(end)}`;
+});
+const timelineUpdates = computed(() => recentUpdates.value.filter((update) => {
+  const postedAt = new Date(update.postedAt);
+  return postedAt >= timelineRange.value.start && postedAt <= timelineRange.value.end;
+}));
 const timeLabel = new Date().toLocaleTimeString("en-GB", { hour: "numeric", minute: "2-digit" });
+
+const timelinePresets = [
+  { label: "Today", apply: () => setTimelineDate(new Date(), "day") },
+  { label: "Yesterday", apply: () => {
+    const date = new Date();
+    date.setDate(date.getDate() - 1);
+    setTimelineDate(date, "day");
+  } },
+  { label: "Last week", apply: () => setTimelineDate(new Date(), "week") },
+];
+
+const setTimelineDate = (date, mode = timelineMode.value) => {
+  selectedDate.value = toDateInputValue(date);
+  timelineMode.value = mode;
+};
+
+const shiftTimeline = (direction) => {
+  const date = parseSelectedDate();
+  date.setDate(date.getDate() + direction * (timelineMode.value === "week" ? 7 : 1));
+  selectedDate.value = toDateInputValue(date);
+};
 
 const firstPropertyPath = (focus) => {
   const first = properties.value[0];
