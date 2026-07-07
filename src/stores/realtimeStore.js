@@ -1,6 +1,8 @@
 import { computed, reactive } from "vue";
 
-export const investorRoomId = (investorId) => `investor-${investorId || "guest"}-admin`;
+export const investorRoomPrefix = (investorId) => `investor-${investorId || "guest"}-`;
+export const investorRoomId = (investorId) => `${investorRoomPrefix(investorId)}admin`;
+export const staffInvestorRoomId = (investorId, staffId) => `${investorRoomPrefix(investorId)}staff-${staffId || "support"}`;
 
 export const realtimeState = reactive({
   messages: [],

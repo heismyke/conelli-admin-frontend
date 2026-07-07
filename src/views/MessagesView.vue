@@ -98,7 +98,7 @@
 import { computed, onMounted, ref } from "vue";
 import { ArrowLeft, MessageCircle, Send } from "@lucide/vue";
 import { state } from "../stores/adminStore";
-import { investorRoomId, markMessagesRead, realtimeState } from "../stores/realtimeStore";
+import { investorRoomId, investorRoomPrefix, markMessagesRead, realtimeState } from "../stores/realtimeStore";
 
 const draft = ref("");
 const selectedInvestorId = ref("");
@@ -106,8 +106,9 @@ const selectedInvestorId = ref("");
 const sortedMessages = computed(() => [...realtimeState.messages].sort((a, b) => String(a.createdAt).localeCompare(String(b.createdAt))));
 
 const conversations = computed(() => state.investors.map((investor) => {
+  const roomPrefix = investorRoomPrefix(investor.id);
   const roomId = investorRoomId(investor.id);
-  const messages = sortedMessages.value.filter((message) => message.roomId === roomId);
+  const messages = sortedMessages.value.filter((message) => message.roomId === roomId || String(message.roomId || "").startsWith(roomPrefix));
   const lastMessage = messages.at(-1);
   return {
     investor,
@@ -124,8 +125,9 @@ const conversations = computed(() => state.investors.map((investor) => {
 }));
 
 const selectedInvestor = computed(() => state.investors.find((investor) => investor.id === selectedInvestorId.value) || null);
-const selectedRoomId = computed(() => selectedInvestor.value ? investorRoomId(selectedInvestor.value.id) : "");
-const roomMessages = computed(() => sortedMessages.value.filter((message) => message.roomId === selectedRoomId.value));
+const selectedRoomPrefix = computed(() => selectedInvestor.value ? investorRoomPrefix(selectedInvestor.value.id) : "");
+const roomMessages = computed(() => sortedMessages.value.filter((message) => selectedRoomPrefix.value && String(message.roomId || "").startsWith(selectedRoomPrefix.value)));
+const selectedRoomId = computed(() => roomMessages.value.at(-1)?.roomId || (selectedInvestor.value ? investorRoomId(selectedInvestor.value.id) : ""));
 
 const selectConversation = (investorId) => {
   selectedInvestorId.value = investorId;
