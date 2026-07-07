@@ -27,10 +27,19 @@
           <div><label class="label mb-2 block">Est. completion</label><input v-model="edit.estCompletionDate" type="date" class="field" /></div>
         </div>
         <div>
-          <label class="label mb-2 block">Cover image URL</label>
-          <input v-model="edit.coverImageUrl" class="field" />
-          <div class="mt-3 h-36 overflow-hidden border border-stone-200 bg-stone-100">
-            <img :src="edit.coverImageUrl" class="h-full w-full object-cover" alt="" />
+          <div class="mb-2 flex flex-wrap items-center justify-between gap-3">
+            <label class="label block">Cover image</label>
+            <div class="flex flex-wrap gap-2">
+              <label class="btn-outline cursor-pointer px-4 py-2 text-xs">
+                {{ coverUploading ? "Uploading..." : "Upload cover" }}
+                <input class="sr-only" type="file" accept="image/*" :disabled="coverUploading || saving" @change="uploadCoverImage" />
+              </label>
+              <button v-if="edit.coverImageUrl" class="btn-outline px-4 py-2 text-xs" type="button" :disabled="saving" @click="clearCoverImage">Remove cover</button>
+            </div>
+          </div>
+          <div class="h-44 overflow-hidden rounded-2xl border border-stone-200 bg-stone-100">
+            <img v-if="edit.coverImageUrl" :src="edit.coverImageUrl" class="h-full w-full object-cover" alt="" />
+            <div v-else class="grid h-full place-items-center text-sm text-stone-400">No cover image uploaded.</div>
           </div>
         </div>
         <div><label class="label mb-2 block">Description</label><textarea v-model="edit.description" rows="4" class="field"></textarea></div>
@@ -42,7 +51,29 @@
             <div class="lg:col-span-2"><label class="label mb-2 block">Tags</label><input v-model="edit.tagsText" class="field" placeholder="Infrastructure, Drainage, FCDA" /></div>
             <div class="lg:col-span-2"><label class="label mb-2 block">Public card description</label><textarea v-model="edit.publicDescription" rows="3" class="field"></textarea></div>
             <div class="lg:col-span-2"><label class="label mb-2 block">Public project overview</label><textarea v-model="edit.publicOverview" rows="5" class="field"></textarea></div>
-            <div class="lg:col-span-2"><label class="label mb-2 block">Gallery image URLs</label><textarea v-model="edit.galleryImagesText" rows="5" class="field" placeholder="/assets/project/image1.jpg"></textarea></div>
+            <div class="lg:col-span-2">
+              <div class="mb-3 flex flex-wrap items-center justify-between gap-3">
+                <label class="label block">Gallery images</label>
+                <label class="btn-outline cursor-pointer px-4 py-2 text-xs">
+                  {{ galleryUploading ? "Uploading..." : "Upload gallery images" }}
+                  <input class="sr-only" type="file" accept="image/*" multiple :disabled="galleryUploading || saving" @change="uploadGalleryImages" />
+                </label>
+              </div>
+              <div v-if="galleryImages.length" class="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                <article v-for="(image, index) in galleryImages" :key="`${image}-${index}`" class="overflow-hidden rounded-2xl border border-stone-100 bg-white">
+                  <div class="h-32 bg-stone-100">
+                    <img :src="image" alt="" class="h-full w-full object-cover" />
+                  </div>
+                  <div class="flex items-center justify-between gap-2 px-3 py-2 text-xs">
+                    <button class="text-stone-600" type="button" @click="setCoverFromGallery(image)">Set as cover</button>
+                    <button class="text-red-600" type="button" @click="removeGalleryImage(index)">Delete</button>
+                  </div>
+                </article>
+              </div>
+              <div v-else class="rounded-2xl border border-dashed border-stone-200 px-4 py-8 text-center text-sm text-stone-400">
+                No gallery images uploaded.
+              </div>
+            </div>
           </div>
         </div>
         <div class="flex flex-wrap gap-3">
@@ -137,7 +168,7 @@
 <script setup>
 import { computed, nextTick, reactive, ref, watch, watchEffect } from "vue";
 import { useRoute, useRouter } from "vue-router";
-import { store } from "../stores/adminStore";
+import { store, uploadAdminFile } from "../stores/adminStore";
 
 const route = useRoute();
 const router = useRouter();
@@ -147,6 +178,8 @@ const updateForm = reactive({ id: "", propertyId: "", title: "", body: "" });
 const milestoneForm = reactive({ id: "", propertyId: "", title: "", plannedDate: "", completedDate: null, status: "pending" });
 const docForm = reactive({ id: "", propertyId: "", investorId: null, title: "", fileUrl: "" });
 const uploadProgress = ref(0);
+const coverUploading = ref(false);
+const galleryUploading = ref(false);
 const saving = ref(false);
 const error = ref("");
 const progressSection = ref(null);
@@ -170,6 +203,7 @@ watchEffect(() => {
 const updates = computed(() => (property.value ? store.updatesForProperty(property.value.id) : []));
 const milestones = computed(() => (property.value ? store.milestonesForProperty(property.value.id) : []));
 const documents = computed(() => (property.value ? store.documentsForProperty(property.value.id) : []));
+const galleryImages = computed(() => String(edit.galleryImagesText || "").split("\n").map((item) => item.trim()).filter(Boolean));
 
 const runSave = async (action) => {
   saving.value = true;
@@ -193,6 +227,49 @@ const resetPropertyForm = () => {
     tagsText: (property.value.tags || []).join(", "),
     galleryImagesText: (property.value.galleryImages || []).join("\n"),
   });
+};
+const uploadCoverImage = async (event) => {
+  const [file] = event.target.files || [];
+  if (!file) return;
+  coverUploading.value = true;
+  error.value = "";
+  try {
+    edit.coverImageUrl = await uploadAdminFile(file, `properties/${property.value.id}/cover`);
+  } catch (err) {
+    error.value = err.message || "Unable to upload cover image.";
+  } finally {
+    coverUploading.value = false;
+    event.target.value = "";
+  }
+};
+const clearCoverImage = () => {
+  edit.coverImageUrl = "";
+};
+const setCoverFromGallery = (image) => {
+  edit.coverImageUrl = image;
+};
+const removeGalleryImage = (index) => {
+  const nextImages = galleryImages.value.filter((_, imageIndex) => imageIndex !== index);
+  edit.galleryImagesText = nextImages.join("\n");
+};
+const uploadGalleryImages = async (event) => {
+  const files = Array.from(event.target.files || []);
+  if (!files.length) return;
+  galleryUploading.value = true;
+  error.value = "";
+  try {
+    const uploadedImages = [];
+    for (const file of files) {
+      uploadedImages.push(await uploadAdminFile(file, `properties/${property.value.id}/gallery`));
+    }
+    edit.galleryImagesText = [...galleryImages.value, ...uploadedImages].join("\n");
+    if (!edit.coverImageUrl && uploadedImages[0]) edit.coverImageUrl = uploadedImages[0];
+  } catch (err) {
+    error.value = err.message || "Unable to upload gallery images.";
+  } finally {
+    galleryUploading.value = false;
+    event.target.value = "";
+  }
 };
 const deleteProperty = async () => {
   const confirmed = window.confirm(`Delete "${property.value.title}"? This also removes related assignments, updates, milestones, and documents.`);
