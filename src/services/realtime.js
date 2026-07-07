@@ -76,6 +76,16 @@ export const createRealtimeClient = ({ role, name, id, onEvent, onStatus }) => {
         socket.send(JSON.stringify(payload));
         return true;
       }
+      onEvent?.({
+        type: "message",
+        id: `local_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+        roomId,
+        senderId: id,
+        senderName: name,
+        senderRole: role,
+        body: message,
+        createdAt: new Date().toISOString(),
+      });
       request("/realtime/messages", { method: "POST", body: JSON.stringify(payload) })
         .then((response) => {
           if (response.message) onEvent?.(response.message);
