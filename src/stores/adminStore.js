@@ -5,6 +5,32 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000
 const uid = (prefix) => `${prefix}_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
 const nowIso = () => new Date().toISOString();
 const today = () => new Date().toISOString().slice(0, 10);
+const publicProjectFields = {
+  prop_3: {
+    publicDescription: "Comprehensive drainage infrastructure and manhole cover installation project for the Federal Capital Development Authority, enhancing urban water management systems.",
+    publicOverview: "This large-scale infrastructure project involved the design, installation, and implementation of a comprehensive drainage system for the Federal Capital Development Authority. The project included the installation of modern manhole covers, drainage channels, and water management systems to improve urban flood control and water runoff management across multiple districts.",
+    client: "Federal Capital Development Authority",
+    year: "2023",
+    tags: ["Infrastructure", "Drainage", "FCDA"],
+    galleryImages: ["/assets/drainage-manhole-cover-fcda/manhole1.jpg", "/assets/drainage-manhole-cover-fcda/manhole2.jpg", "/assets/drainage-manhole-cover-fcda/manhole3.jpg", "/assets/drainage-manhole-cover-fcda/manhole4.jpg", "/assets/drainage-manhole-cover-fcda/manhole5.jpg", "/assets/drainage-manhole-cover-fcda/manhole6.jpg", "/assets/drainage-manhole-cover-fcda/manhole7.jpg", "/assets/drainage-manhole-cover-fcda/manhole8.jpg", "/assets/drainage-manhole-cover-fcda/manhole9.jpg"],
+  },
+  prop_1: {
+    publicDescription: "Premium real estate development project in Lifecamp, Abuja, featuring modern residential and commercial properties designed for contemporary urban living.",
+    publicOverview: "A residential development project in the prestigious Lifecamp area, featuring luxury residential units. The project incorporates sustainable design principles, modern amenities, and quality construction standards.",
+    client: "Private Developer",
+    year: "2023",
+    tags: ["Real Estate", "Development", "Lifecamp"],
+    galleryImages: ["/assets/real-estate-lifecamp/lifecamp1.png", "/assets/real-estate-lifecamp/lifecamp2.png", "/assets/real-estate-lifecamp/lifecamp3.png", "/assets/real-estate-lifecamp/lifecamp4.png", "/assets/real-estate-lifecamp/lifecamp5.png", "/assets/real-estate-lifecamp/lifecamp6.jpg"],
+  },
+  prop_2: {
+    publicDescription: "Modern residential development project in Durumi, Abuja, featuring contemporary design and quality construction for comfortable urban living.",
+    publicOverview: "A premium residential development featuring modern architectural design, sustainable building practices, and high-quality finishes. The project includes multiple residential units with contemporary amenities designed for comfortable urban living.",
+    client: "Private Developer",
+    year: "2023",
+    tags: ["Real Estate", "Residential", "Development"],
+    galleryImages: ["/assets/residential-durumi/durumi1.jpg", "/assets/residential-durumi/durumi2.jpg", "/assets/residential-durumi/durumi8.jpg", "/assets/residential-durumi/durumi9.jpg"],
+  },
+};
 
 const seedData = () => ({
   users: [
@@ -18,6 +44,7 @@ const seedData = () => ({
   properties: [
     {
       id: "prop_1",
+      ...publicProjectFields.prop_1,
       title: "Real Estate Development, Lifecamp Abuja",
       location: "Lifecamp, Abuja",
       category: "Real Estate Development",
@@ -31,6 +58,7 @@ const seedData = () => ({
     },
     {
       id: "prop_2",
+      ...publicProjectFields.prop_2,
       title: "Residential Development, Durumi Abuja",
       location: "Durumi, Abuja",
       category: "Residential Development",
@@ -44,6 +72,7 @@ const seedData = () => ({
     },
     {
       id: "prop_3",
+      ...publicProjectFields.prop_3,
       title: "Drainage and Manhole Cover Project, FCDA",
       location: "Abuja, Nigeria",
       category: "Infrastructure",
@@ -123,6 +152,30 @@ export const loginStaff = async (credentials) => {
   });
 };
 
+export const uploadAdminFile = async (file, folder = "admin") => {
+  const presign = await request("/admin/uploads/presign", {
+    method: "POST",
+    body: JSON.stringify({
+      fileName: file.name,
+      contentType: file.type || "application/octet-stream",
+      folder,
+    }),
+  });
+
+  const response = await fetch(presign.uploadUrl, {
+    method: presign.method || "PUT",
+    headers: {
+      "Content-Type": file.type || "application/octet-stream",
+    },
+    body: file,
+  });
+  if (!response.ok) {
+    throw new Error(`Upload failed with status ${response.status}`);
+  }
+
+  return presign.fileUrl;
+};
+
 export const adminDataReady = loadAdminData().catch((error) => {
   console.error("Failed to load admin data from backend:", error);
   return state;
@@ -161,6 +214,12 @@ export const store = {
       estCompletionDate: payload.estCompletionDate || today(),
       coverImageUrl: payload.coverImageUrl || "/assets/home.png",
       description: payload.description || "",
+      publicDescription: payload.publicDescription || payload.description || "",
+      publicOverview: payload.publicOverview || payload.description || "",
+      client: payload.client || "",
+      year: payload.year || new Date().getFullYear().toString(),
+      tags: Array.isArray(payload.tags) ? payload.tags : String(payload.tags || payload.category || "").split(",").map((item) => item.trim()).filter(Boolean),
+      galleryImages: Array.isArray(payload.galleryImages) ? payload.galleryImages : String(payload.galleryImages || payload.coverImageUrl || "").split("\n").map((item) => item.trim()).filter(Boolean),
       createdAt: nowIso(),
       updatedAt: nowIso(),
     };
@@ -176,6 +235,8 @@ export const store = {
     requireText(payload.location, "Location");
     Object.assign(property, payload, {
       progressPercent: Math.max(0, Math.min(100, Number(payload.progressPercent || 0))),
+      tags: Array.isArray(payload.tags) ? payload.tags : String(payload.tags || "").split(",").map((item) => item.trim()).filter(Boolean),
+      galleryImages: Array.isArray(payload.galleryImages) ? payload.galleryImages : String(payload.galleryImages || "").split("\n").map((item) => item.trim()).filter(Boolean),
       updatedAt: nowIso(),
     });
     await saveAdminData();

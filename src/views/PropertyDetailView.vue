@@ -11,7 +11,7 @@
       </div>
     </div>
 
-    <div class="grid gap-6 px-6 py-8 lg:grid-cols-[1.2fr_0.8fr] lg:px-10">
+    <div class="grid items-start gap-6 px-6 py-8 lg:grid-cols-[1.2fr_0.8fr] lg:px-10">
       <form ref="progressSection" class="card grid gap-4 p-5" @submit.prevent="saveProperty">
         <div class="flex items-center justify-between gap-4">
           <h2 class="font-display text-xl font-light text-stone-900">Core fields</h2>
@@ -34,13 +34,24 @@
           </div>
         </div>
         <div><label class="label mb-2 block">Description</label><textarea v-model="edit.description" rows="4" class="field"></textarea></div>
+        <div class="border-t border-stone-100 pt-4">
+          <h3 class="font-display mb-4 text-lg font-light text-stone-900">Public project content</h3>
+          <div class="grid gap-4 lg:grid-cols-2">
+            <div><label class="label mb-2 block">Client</label><input v-model="edit.client" class="field" /></div>
+            <div><label class="label mb-2 block">Year</label><input v-model="edit.year" class="field" /></div>
+            <div class="lg:col-span-2"><label class="label mb-2 block">Tags</label><input v-model="edit.tagsText" class="field" placeholder="Infrastructure, Drainage, FCDA" /></div>
+            <div class="lg:col-span-2"><label class="label mb-2 block">Public card description</label><textarea v-model="edit.publicDescription" rows="3" class="field"></textarea></div>
+            <div class="lg:col-span-2"><label class="label mb-2 block">Public project overview</label><textarea v-model="edit.publicOverview" rows="5" class="field"></textarea></div>
+            <div class="lg:col-span-2"><label class="label mb-2 block">Gallery image URLs</label><textarea v-model="edit.galleryImagesText" rows="5" class="field" placeholder="/assets/project/image1.jpg"></textarea></div>
+          </div>
+        </div>
         <div class="flex flex-wrap gap-3">
           <button class="btn-gold" type="submit" :disabled="saving">{{ saving ? "Saving..." : "Save core fields" }}</button>
           <button class="btn-outline" type="button" @click="resetPropertyForm">Reset changes</button>
         </div>
       </form>
 
-      <section ref="documentsSection" class="card p-5">
+      <section ref="documentsSection" class="card self-start p-5">
         <h2 class="font-display mb-4 text-xl font-light text-stone-900">Documents</h2>
         <form class="mb-4 grid gap-3" @submit.prevent="saveDocument">
           <input ref="documentInput" v-model="docForm.title" class="field" placeholder="Document title" />
@@ -147,7 +158,10 @@ const updateInput = ref(null);
 
 watchEffect(() => {
   if (!property.value) return;
-  Object.assign(edit, property.value);
+  Object.assign(edit, property.value, {
+    tagsText: (property.value.tags || []).join(", "),
+    galleryImagesText: (property.value.galleryImages || []).join("\n"),
+  });
   updateForm.propertyId = property.value.id;
   milestoneForm.propertyId = property.value.id;
   docForm.propertyId = property.value.id;
@@ -169,9 +183,16 @@ const runSave = async (action) => {
   }
 };
 
-const saveProperty = () => runSave(() => store.updateProperty(property.value.id, edit));
+const saveProperty = () => runSave(() => store.updateProperty(property.value.id, {
+  ...edit,
+  tags: edit.tagsText,
+  galleryImages: edit.galleryImagesText,
+}));
 const resetPropertyForm = () => {
-  if (property.value) Object.assign(edit, property.value);
+  if (property.value) Object.assign(edit, property.value, {
+    tagsText: (property.value.tags || []).join(", "),
+    galleryImagesText: (property.value.galleryImages || []).join("\n"),
+  });
 };
 const deleteProperty = async () => {
   const confirmed = window.confirm(`Delete "${property.value.title}"? This also removes related assignments, updates, milestones, and documents.`);
