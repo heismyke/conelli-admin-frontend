@@ -11,35 +11,35 @@
               <CalendarDays class="h-4 w-4" />
               {{ shortDate }}
             </button>
-            <div v-if="showTimelinePicker" class="absolute left-0 top-14 z-30 w-80 rounded-[1.75rem] border border-white/10 bg-white p-4 text-slate-950 shadow-2xl shadow-slate-950/30">
-              <div class="mb-3 flex items-center justify-between">
+            <div v-if="showTimelinePicker" class="absolute left-0 top-14 z-30 w-72 rounded-[1.35rem] border border-white/10 bg-white p-3 text-slate-950 shadow-2xl shadow-slate-950/30">
+              <div class="mb-3 flex items-center justify-between gap-3">
                 <div>
-                  <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Timeline</p>
-                  <p class="text-base font-semibold">{{ timelineTitle }}</p>
+                  <p class="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-400">Timeline</p>
+                  <p class="text-sm font-medium leading-snug">{{ timelineTitle }}</p>
                 </div>
-                <button class="grid h-9 w-9 place-items-center rounded-full border border-slate-200 hover:bg-slate-50" type="button" @click="showTimelinePicker = false">
-                  <X class="h-4 w-4" />
+                <button class="grid h-8 w-8 flex-shrink-0 place-items-center rounded-full border border-slate-200 hover:bg-slate-50" type="button" @click="showTimelinePicker = false">
+                  <X class="h-3.5 w-3.5" />
                 </button>
               </div>
 
               <div class="mb-3 grid grid-cols-3 gap-2">
-                <button v-for="preset in timelinePresets" :key="preset.label" class="rounded-full border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-700 transition hover:border-slate-950 hover:text-slate-950" type="button" @click="preset.apply">
+                <button v-for="preset in timelinePresets" :key="preset.label" class="rounded-full border border-slate-200 px-2 py-1.5 text-[11px] font-medium text-slate-700 transition hover:border-slate-950 hover:text-slate-950" type="button" @click="preset.apply">
                   {{ preset.label }}
                 </button>
               </div>
 
               <div class="mb-3 grid grid-cols-2 gap-2 rounded-full bg-slate-100 p-1">
-                <button class="rounded-full px-3 py-2 text-xs font-semibold transition" :class="timelineMode === 'day' ? 'bg-white text-slate-950 shadow-sm' : 'text-slate-500'" type="button" @click="timelineMode = 'day'">Day</button>
-                <button class="rounded-full px-3 py-2 text-xs font-semibold transition" :class="timelineMode === 'week' ? 'bg-white text-slate-950 shadow-sm' : 'text-slate-500'" type="button" @click="timelineMode = 'week'">Last 7 days</button>
+                <button class="rounded-full px-3 py-1.5 text-[11px] font-medium transition" :class="timelineMode === 'day' ? 'bg-white text-slate-950 shadow-sm' : 'text-slate-500'" type="button" @click="timelineMode = 'day'">Day</button>
+                <button class="rounded-full px-3 py-1.5 text-[11px] font-medium transition" :class="timelineMode === 'week' ? 'bg-white text-slate-950 shadow-sm' : 'text-slate-500'" type="button" @click="timelineMode = 'week'">Last 7 days</button>
               </div>
 
               <div class="flex items-center gap-2">
-                <button class="grid h-11 w-11 place-items-center rounded-full border border-slate-200 hover:bg-slate-50" type="button" @click="shiftTimeline(-1)">
-                  <ChevronLeft class="h-4 w-4" />
+                <button class="grid h-9 w-9 place-items-center rounded-full border border-slate-200 hover:bg-slate-50" type="button" @click="shiftTimeline(-1)">
+                  <ChevronLeft class="h-3.5 w-3.5" />
                 </button>
-                <input v-model="selectedDate" class="h-11 min-w-0 flex-1 rounded-full border border-slate-200 px-4 text-sm font-semibold text-slate-900 outline-none focus:border-slate-900" type="date" />
-                <button class="grid h-11 w-11 place-items-center rounded-full border border-slate-200 hover:bg-slate-50" type="button" @click="shiftTimeline(1)">
-                  <ChevronRight class="h-4 w-4" />
+                <input v-model="selectedDate" class="h-9 min-w-0 flex-1 rounded-full border border-slate-200 px-3 text-xs font-medium text-slate-900 outline-none focus:border-slate-900" type="date" />
+                <button class="grid h-9 w-9 place-items-center rounded-full border border-slate-200 hover:bg-slate-50" type="button" @click="shiftTimeline(1)">
+                  <ChevronRight class="h-3.5 w-3.5" />
                 </button>
               </div>
             </div>
