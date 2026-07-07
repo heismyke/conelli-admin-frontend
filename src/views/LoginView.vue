@@ -65,9 +65,10 @@ const handleLogin = async () => {
   loading.value = true;
   try {
     const payload = await loginStaff({ email: email.value, password: password.value });
-    await loadAdminData();
+    const data = await loadAdminData();
+    const loadedUser = data.users?.find((user) => user.id === payload.user?.id || user.email === payload.user?.email);
     error.value = "";
-    emit("login", payload.user);
+    emit("login", loadedUser || payload.user);
   } catch (err) {
     error.value = err.message || "Unable to sign in.";
   } finally {

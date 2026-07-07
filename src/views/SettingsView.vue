@@ -68,7 +68,7 @@
 <script setup>
 import { computed, reactive, ref, watchEffect } from "vue";
 import { Moon, Sun } from "@lucide/vue";
-import { isAdmin, store } from "../stores/adminStore";
+import { isAdmin, setCurrentUser, store } from "../stores/adminStore";
 
 defineEmits(["toggle-theme"]);
 defineProps({
@@ -112,6 +112,7 @@ const saveProfile = async () => {
   error.value = "";
   try {
     await store.upsertUser({ ...form, role: isAdmin.value ? form.role : currentUser.value.role });
+    setCurrentUser(store.currentUser.value);
     saved.value = true;
     form.password = "";
   } catch (err) {
