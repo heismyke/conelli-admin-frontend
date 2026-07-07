@@ -1,5 +1,7 @@
 import { computed, reactive } from "vue";
 
+export const investorRoomId = (investorId) => `investor-${investorId || "guest"}-admin`;
+
 export const realtimeState = reactive({
   messages: [],
   notifications: [],

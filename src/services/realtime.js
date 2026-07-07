@@ -35,9 +35,9 @@ export const createRealtimeClient = ({ role, name, id, onEvent, onStatus }) => {
   connect();
 
   return {
-    sendMessage(body) {
+    sendMessage(body, roomId = "investor-admin") {
       if (!body.trim() || socket?.readyState !== WebSocket.OPEN) return false;
-      socket.send(JSON.stringify({ type: "message", roomId: "investor-admin", senderId: id, senderName: name, senderRole: role, body }));
+      socket.send(JSON.stringify({ type: "message", roomId, senderId: id, senderName: name, senderRole: role, body }));
       return true;
     },
     close() {
