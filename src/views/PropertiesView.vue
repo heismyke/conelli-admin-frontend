@@ -1,6 +1,6 @@
 <template>
-  <main class="flex-1 overflow-auto bg-stone-50">
-    <div class="border-b border-stone-200 bg-white px-6 py-6 lg:px-10">
+  <main class="flex min-h-[calc(100dvh-1.4rem)] flex-1 flex-col overflow-auto bg-stone-50">
+    <div class="shrink-0 border-b border-stone-200 bg-white px-6 py-6 lg:px-10">
       <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
         <div>
           <h1 class="font-display text-3xl font-light text-stone-900">Properties</h1>
@@ -13,7 +13,7 @@
       </div>
     </div>
 
-    <div class="px-6 py-8 lg:px-10">
+    <div class="flex flex-1 flex-col px-6 py-8 lg:px-10">
       <form v-if="showCreate" class="card mb-6 grid gap-4 p-5 lg:grid-cols-4" @submit.prevent="createProperty">
         <div v-if="error" class="border border-red-200 bg-red-50 px-4 py-3 text-xs text-red-600 lg:col-span-4">{{ error }}</div>
         <input v-model="form.title" class="field lg:col-span-2" placeholder="Title" />
@@ -36,19 +36,19 @@
         <button class="btn-gold" type="submit" :disabled="saving">{{ saving ? "Saving..." : "Save property" }}</button>
       </form>
 
-      <div class="mb-5 flex flex-col gap-3 lg:flex-row">
-        <select v-model="statusFilter" class="field lg:w-56">
+      <div class="mb-5 grid shrink-0 gap-3 lg:grid-cols-2">
+        <select v-model="statusFilter" class="field">
           <option value="">All statuses</option>
           <option v-for="status in statuses" :key="status">{{ status }}</option>
         </select>
-        <select v-model="categoryFilter" class="field lg:w-64">
+        <select v-model="categoryFilter" class="field">
           <option value="">All categories</option>
           <option v-for="category in categories" :key="category">{{ category }}</option>
         </select>
       </div>
 
-      <div class="card overflow-hidden">
-        <div class="overflow-x-auto">
+      <div class="card flex flex-1 overflow-hidden">
+        <div class="w-full overflow-x-auto">
           <table class="w-full min-w-[920px]">
             <thead class="bg-stone-50">
               <tr class="border-b border-stone-200">
