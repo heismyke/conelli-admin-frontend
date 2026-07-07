@@ -60,7 +60,7 @@
               <p class="hidden text-xs text-stone-500 sm:block">{{ roomMessages.length }} messages</p>
             </div>
 
-            <div class="min-h-0 flex-1 space-y-4 overflow-y-auto p-5">
+            <div ref="messagesScroller" class="min-h-0 flex-1 space-y-4 overflow-y-auto p-5">
               <div v-for="message in roomMessages" :key="message.id" class="flex" :class="message.senderRole === 'admin' ? 'justify-end' : 'justify-start'">
                 <div class="max-w-2xl rounded-3xl px-4 py-3" :class="message.senderRole === 'admin' ? 'bg-slate-950 text-white' : 'bg-slate-100 text-slate-950'">
                   <p class="text-xs font-semibold opacity-70">{{ message.senderName }} · {{ formatTime(message.createdAt) }}</p>
@@ -95,13 +95,14 @@
 </template>
 
 <script setup>
-import { computed, onMounted, ref } from "vue";
+import { computed, nextTick, onMounted, ref, watch } from "vue";
 import { ArrowLeft, MessageCircle, Send } from "@lucide/vue";
 import { state } from "../stores/adminStore";
 import { investorRoomId, investorRoomPrefix, markMessagesRead, realtimeState } from "../stores/realtimeStore";
 
 const draft = ref("");
 const selectedInvestorId = ref("");
+const messagesScroller = ref(null);
 
 const sortedMessages = computed(() => [...realtimeState.messages].sort((a, b) => String(a.createdAt).localeCompare(String(b.createdAt))));
 
@@ -129,13 +130,22 @@ const selectedRoomPrefix = computed(() => selectedInvestor.value ? investorRoomP
 const roomMessages = computed(() => sortedMessages.value.filter((message) => selectedRoomPrefix.value && String(message.roomId || "").startsWith(selectedRoomPrefix.value)));
 const selectedRoomId = computed(() => roomMessages.value.at(-1)?.roomId || (selectedInvestor.value ? investorRoomId(selectedInvestor.value.id) : ""));
 
+const scrollMessagesToBottom = async () => {
+  await nextTick();
+  if (messagesScroller.value) messagesScroller.value.scrollTop = messagesScroller.value.scrollHeight;
+};
+
+watch(() => [selectedInvestorId.value, roomMessages.value.length], scrollMessagesToBottom);
+
 const selectConversation = (investorId) => {
   selectedInvestorId.value = investorId;
   markMessagesRead();
+  scrollMessagesToBottom();
 };
 
 onMounted(() => {
   markMessagesRead();
+  scrollMessagesToBottom();
 });
 
 const sendMessage = () => {
