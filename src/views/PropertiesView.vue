@@ -62,7 +62,7 @@
 
     <Teleport to="body">
       <div v-if="showCreate" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/45 px-4 py-6 backdrop-blur-sm" @click.self="closeCreateModal">
-        <form class="card w-full max-w-5xl p-6 shadow-2xl" @submit.prevent="createProperty">
+        <form class="card w-full max-w-3xl p-6 shadow-2xl" @submit.prevent="createProperty">
           <div class="mb-6 flex items-start justify-between gap-4">
             <div>
               <p class="label mb-2">New property</p>
@@ -74,9 +74,9 @@
             </button>
           </div>
 
-          <div class="grid gap-4 lg:grid-cols-3">
-            <div v-if="error" class="border border-red-200 bg-red-50 px-4 py-3 text-xs text-red-600 lg:col-span-3">{{ error }}</div>
-            <input v-model="form.title" class="field lg:col-span-2" placeholder="Title" />
+          <div class="grid gap-4 md:grid-cols-2">
+            <div v-if="error" class="border border-red-200 bg-red-50 px-4 py-3 text-xs text-red-600 md:col-span-2">{{ error }}</div>
+            <input v-model="form.title" class="field md:col-span-2" placeholder="Title" />
             <input v-model="form.location" class="field" placeholder="Location" />
             <select v-model="form.category" class="field">
               <option>Real Estate Development</option>
@@ -91,8 +91,8 @@
             </select>
             <input v-model.number="form.progressPercent" class="field" min="0" max="100" type="number" placeholder="Progress %" />
             <input v-model="form.estCompletionDate" class="field" type="date" />
-            <input v-model="form.coverImageUrl" class="field lg:col-span-2" placeholder="Cover image URL" />
-            <textarea v-model="form.description" class="field lg:col-span-3" rows="4" placeholder="Description"></textarea>
+            <input v-model="form.coverImageUrl" class="field md:col-span-2" placeholder="Cover image URL" />
+            <textarea v-model="form.description" class="field md:col-span-2" rows="4" placeholder="Description"></textarea>
           </div>
 
           <div class="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
