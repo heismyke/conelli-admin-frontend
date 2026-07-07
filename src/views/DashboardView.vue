@@ -66,7 +66,6 @@
 
       <div class="mb-12">
         <h1 class="max-w-4xl text-4xl font-semibold tracking-tight lg:text-5xl">Welcome, {{ firstName }}. Today's a project day.</h1>
-        <p class="mt-3 text-lg text-white/55">Your investor-facing data is waiting to be organized.</p>
       </div>
 
       <div class="flex flex-col gap-8 xl:flex-row xl:items-end xl:justify-between">
