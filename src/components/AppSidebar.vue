@@ -44,6 +44,10 @@
 
     <div class="sidebar-account">
       <div class="space-y-3">
+        <button class="theme-toggle-btn" type="button" @click="$emit('toggle-theme')">
+          <component :is="themeMode === 'dark' ? Sun : Moon" class="h-4 w-4" />
+          {{ themeMode === "dark" ? "Light mode" : "Dark mode" }}
+        </button>
         <button class="flex w-full items-center gap-3 rounded-2xl text-left transition hover:bg-slate-50" type="button" @click="$router.push('/dashboard/settings')">
           <div class="h-11 w-11 flex-shrink-0 overflow-hidden rounded-full border border-slate-200 bg-slate-100">
             <img v-if="user.profileImageUrl" :src="user.profileImageUrl" alt="" class="h-full w-full object-cover" />
@@ -65,12 +69,15 @@
 
 <script setup>
 import { computed } from "vue";
-import { Bell, Building2, LayoutDashboard, LogOut, MessageSquare, UserCog, Users } from "@lucide/vue";
+import { Bell, Building2, LayoutDashboard, LogOut, MessageSquare, Moon, Sun, UserCog, Users } from "@lucide/vue";
 import { store } from "../stores/adminStore";
 import { realtimeState } from "../stores/realtimeStore";
 
-defineEmits(["logout"]);
-defineProps({ isLoggedIn: { type: Boolean, required: true } });
+defineEmits(["logout", "toggle-theme"]);
+defineProps({
+  isLoggedIn: { type: Boolean, required: true },
+  themeMode: { type: String, required: true },
+});
 
 const user = computed(() => store.currentUser.value);
 const initials = computed(() => user.value.name.split(" ").map((part) => part[0]).join("").slice(0, 2));

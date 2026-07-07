@@ -9,9 +9,12 @@ import { applyRealtimeEvent, realtimeState } from "./stores/realtimeStore";
 const route = useRoute();
 const router = useRouter();
 const authKey = "conelli_admin_auth";
+const themeKey = "conelli_admin_theme";
 const isLoggedIn = ref(Boolean(localStorage.getItem(authKey)));
+const themeMode = ref(localStorage.getItem(themeKey) || "light");
 const isLoginRoute = computed(() => route.path === "/login");
 const hideFooter = computed(() => route.path === "/dashboard/messages" || route.path === "/dashboard/notifications");
+const isDarkTheme = computed(() => themeMode.value === "dark");
 let realtimeClient;
 
 const handleLogin = (credentials) => {
@@ -27,6 +30,11 @@ const handleLogout = () => {
   realtimeClient = null;
   realtimeState.sendMessage = null;
   router.replace("/login");
+};
+
+const toggleTheme = () => {
+  themeMode.value = isDarkTheme.value ? "light" : "dark";
+  localStorage.setItem(themeKey, themeMode.value);
 };
 
 const startRealtime = () => {
@@ -56,8 +64,8 @@ onBeforeUnmount(() => realtimeClient?.close());
 </script>
 
 <template>
-  <div class="app-shell min-h-screen text-stone-950" :class="{ 'lg:flex': !isLoginRoute }">
-    <AppSidebar v-if="!isLoginRoute" :is-logged-in="isLoggedIn" @logout="handleLogout" />
+  <div class="app-shell min-h-screen text-stone-950" :class="[{ 'lg:flex': !isLoginRoute }, isDarkTheme ? 'theme-dark' : 'theme-light']">
+    <AppSidebar v-if="!isLoginRoute" :is-logged-in="isLoggedIn" :theme-mode="themeMode" @logout="handleLogout" @toggle-theme="toggleTheme" />
 
     <div class="content-shell min-w-0 flex-1">
       <router-view @login="handleLogin" />
