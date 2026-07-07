@@ -6,7 +6,7 @@
           <h1 class="font-display text-3xl font-light text-stone-900">Properties</h1>
           <p class="mt-1 text-sm text-stone-500">Create and maintain investor-facing project records.</p>
         </div>
-        <button class="btn-gold" @click="showCreate = !showCreate">
+        <button class="btn-gold" @click="openCreateModal">
           <Plus class="h-4 w-4" />
           Create property
         </button>
@@ -14,28 +14,6 @@
     </div>
 
     <div class="flex flex-1 flex-col px-6 py-8 lg:px-10">
-      <form v-if="showCreate" class="card mb-6 grid gap-4 p-5 lg:grid-cols-4" @submit.prevent="createProperty">
-        <div v-if="error" class="border border-red-200 bg-red-50 px-4 py-3 text-xs text-red-600 lg:col-span-4">{{ error }}</div>
-        <input v-model="form.title" class="field lg:col-span-2" placeholder="Title" />
-        <input v-model="form.location" class="field" placeholder="Location" />
-        <select v-model="form.category" class="field">
-          <option>Real Estate Development</option>
-          <option>Residential Development</option>
-          <option>Infrastructure</option>
-        </select>
-        <select v-model="form.status" class="field">
-          <option>Under Construction</option>
-          <option>Foundation Phase</option>
-          <option>Finishing Works</option>
-          <option>Completed</option>
-        </select>
-        <input v-model.number="form.progressPercent" class="field" min="0" max="100" type="number" placeholder="Progress %" />
-        <input v-model="form.estCompletionDate" class="field" type="date" />
-        <input v-model="form.coverImageUrl" class="field" placeholder="Cover image URL" />
-        <textarea v-model="form.description" class="field lg:col-span-3" rows="2" placeholder="Description"></textarea>
-        <button class="btn-gold" type="submit" :disabled="saving">{{ saving ? "Saving..." : "Save property" }}</button>
-      </form>
-
       <div class="mb-5 grid shrink-0 gap-3 lg:grid-cols-2">
         <select v-model="statusFilter" class="field">
           <option value="">All statuses</option>
@@ -81,13 +59,56 @@
         </div>
       </div>
     </div>
+
+    <Teleport to="body">
+      <div v-if="showCreate" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/45 px-4 py-6 backdrop-blur-sm" @click.self="closeCreateModal">
+        <form class="card w-full max-w-5xl p-6 shadow-2xl" @submit.prevent="createProperty">
+          <div class="mb-6 flex items-start justify-between gap-4">
+            <div>
+              <p class="label mb-2">New property</p>
+              <h2 class="text-2xl font-semibold tracking-tight text-stone-950">Create property</h2>
+              <p class="mt-1 text-sm text-stone-500">Add an investor-facing project record.</p>
+            </div>
+            <button class="btn-outline h-10 w-10 !min-h-10 !p-0" type="button" aria-label="Close create property modal" @click="closeCreateModal">
+              <X class="h-4 w-4" />
+            </button>
+          </div>
+
+          <div class="grid gap-4 lg:grid-cols-3">
+            <div v-if="error" class="border border-red-200 bg-red-50 px-4 py-3 text-xs text-red-600 lg:col-span-3">{{ error }}</div>
+            <input v-model="form.title" class="field lg:col-span-2" placeholder="Title" />
+            <input v-model="form.location" class="field" placeholder="Location" />
+            <select v-model="form.category" class="field">
+              <option>Real Estate Development</option>
+              <option>Residential Development</option>
+              <option>Infrastructure</option>
+            </select>
+            <select v-model="form.status" class="field">
+              <option>Under Construction</option>
+              <option>Foundation Phase</option>
+              <option>Finishing Works</option>
+              <option>Completed</option>
+            </select>
+            <input v-model.number="form.progressPercent" class="field" min="0" max="100" type="number" placeholder="Progress %" />
+            <input v-model="form.estCompletionDate" class="field" type="date" />
+            <input v-model="form.coverImageUrl" class="field lg:col-span-2" placeholder="Cover image URL" />
+            <textarea v-model="form.description" class="field lg:col-span-3" rows="4" placeholder="Description"></textarea>
+          </div>
+
+          <div class="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+            <button class="btn-outline" type="button" @click="closeCreateModal">Cancel</button>
+            <button class="btn-gold" type="submit" :disabled="saving">{{ saving ? "Saving..." : "Save property" }}</button>
+          </div>
+        </form>
+      </div>
+    </Teleport>
   </main>
 </template>
 
 <script setup>
 import { computed, reactive, ref, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
-import { Plus } from "@lucide/vue";
+import { Plus, X } from "@lucide/vue";
 import { state, store } from "../stores/adminStore";
 
 const showCreate = ref(false);
@@ -102,6 +123,20 @@ const form = reactive({ title: "", location: "", category: "Real Estate Developm
 const statuses = computed(() => [...new Set(state.properties.map((item) => item.status))]);
 const categories = computed(() => [...new Set(state.properties.map((item) => item.category))]);
 const filtered = computed(() => state.properties.filter((item) => (!statusFilter.value || item.status === statusFilter.value) && (!categoryFilter.value || item.category === categoryFilter.value)));
+const resetForm = () => {
+  Object.assign(form, { title: "", location: "", category: "Real Estate Development", status: "Under Construction", progressPercent: 0, estCompletionDate: "", coverImageUrl: "", description: "" });
+};
+
+const openCreateModal = () => {
+  error.value = "";
+  showCreate.value = true;
+};
+
+const closeCreateModal = () => {
+  if (saving.value) return;
+  error.value = "";
+  showCreate.value = false;
+};
 
 watch(
   () => route.query.mode,
@@ -116,7 +151,7 @@ const createProperty = async () => {
   error.value = "";
   try {
     const created = await store.createProperty(form);
-    Object.assign(form, { title: "", location: "", category: "Real Estate Development", status: "Under Construction", progressPercent: 0, estCompletionDate: "", coverImageUrl: "", description: "" });
+    resetForm();
     showCreate.value = false;
     router.push(`/dashboard/properties/${created.id}`);
   } catch (err) {
