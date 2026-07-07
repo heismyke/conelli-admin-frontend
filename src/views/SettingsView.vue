@@ -1,8 +1,16 @@
 <template>
   <main class="flex-1 overflow-auto bg-stone-50">
     <div class="border-b border-stone-200 bg-white px-6 py-6 lg:px-10">
-      <h1 class="font-display text-3xl font-light text-stone-900">Settings</h1>
-      <p class="mt-1 text-sm text-stone-500">Manage your admin profile and account information.</p>
+      <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h1 class="font-display text-3xl font-light text-stone-900">Settings</h1>
+          <p class="mt-1 text-sm text-stone-500">Manage your admin profile and account information.</p>
+        </div>
+        <button class="theme-toggle-btn w-full sm:w-auto sm:px-6" type="button" @click="$emit('toggle-theme')">
+          <component :is="themeMode === 'dark' ? Sun : Moon" class="h-4 w-4" />
+          {{ themeMode === "dark" ? "Light mode" : "Dark mode" }}
+        </button>
+      </div>
     </div>
 
     <div class="px-6 py-8 lg:px-10">
@@ -58,7 +66,13 @@
 
 <script setup>
 import { computed, reactive, ref, watchEffect } from "vue";
+import { Moon, Sun } from "@lucide/vue";
 import { store } from "../stores/adminStore";
+
+defineEmits(["toggle-theme"]);
+defineProps({
+  themeMode: { type: String, default: "light" },
+});
 
 const currentUser = computed(() => store.currentUser.value);
 const form = reactive({ id: "", name: "", email: "", password: "", role: "STAFF", profileImageUrl: "" });
