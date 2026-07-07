@@ -92,6 +92,16 @@
               <input v-model="form.phone" class="field" placeholder="+234..." />
             </label>
             <label>
+              <span class="label mb-2 block">Password</span>
+              <input
+                v-model="form.password"
+                class="field"
+                type="password"
+                :placeholder="form.id ? 'Leave blank to keep current password' : 'Required for new investor'"
+                autocomplete="new-password"
+              />
+            </label>
+            <label>
               <span class="label mb-2 block">Member since</span>
               <input v-model="form.memberSince" class="field" type="date" />
             </label>
@@ -160,7 +170,7 @@ import { useRoute } from "vue-router";
 import { Pencil, Plus, Save, Trash2, Upload } from "@lucide/vue";
 import { state, store } from "../stores/adminStore";
 
-const blankInvestor = () => ({ id: "", name: "", email: "", phone: "", memberSince: "", status: "active" });
+const blankInvestor = () => ({ id: "", name: "", email: "", phone: "", memberSince: "", status: "active", password: "" });
 
 const form = reactive(blankInvestor());
 const docForm = reactive({ propertyId: null, investorId: "", title: "", fileUrl: "" });
@@ -170,7 +180,8 @@ const error = ref("");
 const route = useRoute();
 
 const fillInvestor = (payload) => {
-  Object.assign(form, blankInvestor(), payload);
+  const { passwordHash: _passwordHash, password: _password, ...safePayload } = payload || {};
+  Object.assign(form, blankInvestor(), safePayload, { password: "" });
 };
 
 const selectInvestor = (investor) => {

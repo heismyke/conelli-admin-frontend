@@ -38,8 +38,8 @@ const seedData = () => ({
     { id: "user_staff", name: "Site Office", email: "staff@conelliengineering.com", passwordHash: "dev", role: "STAFF", profileImageUrl: "", createdAt: "2026-01-10T09:00:00.000Z" },
   ],
   investors: [
-    { id: "inv_1", name: "Conelli Partner", email: "partner@conelliengineering.com", phone: "+234 800 000 1001", memberSince: "2022-03-01", status: "active" },
-    { id: "inv_2", name: "Infrastructure Holdings Ltd", email: "ops@infrastructureholdings.ng", phone: "+234 800 000 1002", memberSince: "2023-06-15", status: "active" },
+    { id: "inv_1", name: "Conelli Partner", email: "partner@conelliengineering.com", phone: "+234 800 000 1001", memberSince: "2022-03-01", status: "active", passwordHash: "dev" },
+    { id: "inv_2", name: "Infrastructure Holdings Ltd", email: "ops@infrastructureholdings.ng", phone: "+234 800 000 1002", memberSince: "2023-06-15", status: "active", passwordHash: "dev" },
   ],
   properties: [
     {
@@ -311,14 +311,23 @@ export const store = {
   async upsertInvestor(payload) {
     requireText(payload.name, "Investor name");
     requireText(payload.email, "Investor email");
+    if (!payload.id && !String(payload.password || "").trim()) throw new Error("Password is required.");
+    const next = {
+      name: payload.name.trim(),
+      email: payload.email.trim(),
+      phone: payload.phone || "",
+      memberSince: payload.memberSince || today(),
+      status: payload.status || "active",
+    };
+    if (String(payload.password || "").trim()) next.passwordHash = payload.password;
     if (payload.id) {
       const investor = state.investors.find((item) => item.id === payload.id);
       if (!investor) throw new Error("Investor not found.");
-      Object.assign(investor, payload);
+      Object.assign(investor, { id: payload.id, ...next });
       await saveAdminData();
       return investor;
     }
-    const record = { ...payload, id: uid("inv"), memberSince: payload.memberSince || today(), status: payload.status || "active" };
+    const record = { id: uid("inv"), ...next };
     state.investors.unshift(record);
     await saveAdminData();
     return record;
