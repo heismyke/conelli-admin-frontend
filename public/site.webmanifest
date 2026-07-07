@@ -1,0 +1,22 @@
+{
+  "name": "Conelli Admin Console",
+  "short_name": "Conelli Admin",
+  "description": "Internal Conelli Engineering admin console for property, investor, staff, and project communication management.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#edf3f8",
+  "theme_color": "#111827",
+  "icons": [
+    {
+      "src": "/favicon.ico",
+      "sizes": "32x32",
+      "type": "image/x-icon"
+    },
+    {
+      "src": "/assets/logo.png",
+      "sizes": "585x427",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}
