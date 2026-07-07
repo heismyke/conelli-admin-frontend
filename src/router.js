@@ -16,7 +16,7 @@ const routes = [
   { path: "/dashboard/properties", component: PropertiesView },
   { path: "/dashboard/properties/:id", component: PropertyDetailView },
   { path: "/dashboard/investors", component: InvestorsView },
-  { path: "/dashboard/users", component: UsersView },
+  { path: "/dashboard/users", component: UsersView, meta: { requiresAdmin: true } },
   { path: "/dashboard/settings", component: SettingsView },
   { path: "/dashboard/messages", component: MessagesView },
   { path: "/dashboard/notifications", component: NotificationsView },
@@ -29,9 +29,17 @@ export const router = createRouter({
 
 router.beforeEach((to) => {
   const isLogin = to.path === "/login";
-  const isAuthed = Boolean(localStorage.getItem("conelli_admin_auth"));
+  const storedAuth = localStorage.getItem("conelli_admin_auth");
+  const isAuthed = Boolean(storedAuth);
+  let authUser = null;
+  try {
+    authUser = JSON.parse(storedAuth || "null");
+  } catch {
+    authUser = null;
+  }
 
   if (!isLogin && !isAuthed) return { path: "/login", query: { redirect: to.fullPath } };
+  if (to.meta.requiresAdmin && String(authUser?.role || "").toUpperCase() !== "ADMIN") return "/dashboard";
   if (isLogin && isAuthed) return "/dashboard";
   return true;
 });

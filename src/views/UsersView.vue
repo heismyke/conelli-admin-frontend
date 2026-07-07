@@ -6,14 +6,14 @@
           <h1 class="font-display text-3xl font-light text-stone-900">Staff users</h1>
           <p class="mt-1 text-sm text-stone-500">ADMIN-only account management surface.</p>
         </div>
-        <button class="btn-gold" type="button" @click="startCreate">
+        <button v-if="isAdmin" class="btn-gold" type="button" @click="startCreate">
           <Plus class="h-4 w-4" />
           New staff user
         </button>
       </div>
     </div>
 
-    <div class="grid gap-6 px-6 py-8 lg:grid-cols-[0.8fr_1.2fr] lg:px-10">
+    <div v-if="isAdmin" class="grid gap-6 px-6 py-8 lg:grid-cols-[0.8fr_1.2fr] lg:px-10">
       <form class="card grid gap-4 p-5" @submit.prevent="saveUser">
         <div class="flex items-center justify-between gap-4">
           <div>
@@ -61,6 +61,7 @@
             <option>ADMIN</option>
             <option>STAFF</option>
           </select>
+          <p class="mt-2 text-xs leading-5 text-stone-500">ADMIN can manage staff users and all admin data. STAFF can manage operations, investors, documents, messages, and notifications, but cannot manage staff accounts.</p>
         </label>
 
         <button class="btn-gold" type="submit" :disabled="saving">
@@ -131,6 +132,14 @@
         </div>
       </div>
     </div>
+
+    <div v-else class="px-6 py-8 lg:px-10">
+      <div class="card max-w-2xl p-6">
+        <p class="label mb-2">Restricted</p>
+        <h2 class="text-2xl font-semibold text-stone-950">Admin privileges required</h2>
+        <p class="mt-2 text-sm leading-6 text-stone-500">Staff accounts can manage operational content and messages, but only admins can create, edit, or delete staff users.</p>
+      </div>
+    </div>
   </main>
 </template>
 
@@ -138,7 +147,7 @@
 import { computed, reactive, ref, watch } from "vue";
 import { useRoute } from "vue-router";
 import { Pencil, Plus, Save, Trash2, X } from "@lucide/vue";
-import { state, store } from "../stores/adminStore";
+import { isAdmin, state, store } from "../stores/adminStore";
 
 const blankUser = () => ({ id: "", name: "", email: "", password: "", role: "STAFF", profileImageUrl: "" });
 const form = reactive(blankUser());
@@ -167,6 +176,10 @@ const uploadProfileImage = (event) => {
 };
 
 const saveUser = async () => {
+  if (!isAdmin.value) {
+    error.value = "Admin privileges are required to manage staff users.";
+    return;
+  }
   saving.value = true;
   error.value = "";
   try {
@@ -180,11 +193,16 @@ const saveUser = async () => {
 };
 
 const selectUser = (user) => {
+  if (!isAdmin.value) return;
   Object.assign(form, { id: user.id, name: user.name, email: user.email, password: "", role: user.role, profileImageUrl: user.profileImageUrl || "" });
   error.value = "";
 };
 
 const deleteUser = async (user) => {
+  if (!isAdmin.value) {
+    error.value = "Admin privileges are required to delete staff users.";
+    return;
+  }
   const confirmed = window.confirm(`Delete "${user.name}"? Existing updates and documents will keep their content but lose this staff attribution.`);
   if (!confirmed) return;
 

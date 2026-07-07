@@ -2,15 +2,14 @@
 import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import AppSidebar from "./components/AppSidebar.vue";
-import { loadAdminData, store } from "./stores/adminStore";
+import { clearCurrentUser, loadAdminData, setCurrentUser, store } from "./stores/adminStore";
 import { createRealtimeClient } from "./services/realtime";
 import { applyRealtimeEvent, realtimeState } from "./stores/realtimeStore";
 
 const route = useRoute();
 const router = useRouter();
-const authKey = "conelli_admin_auth";
 const themeKey = "conelli_admin_theme";
-const isLoggedIn = ref(Boolean(localStorage.getItem(authKey)));
+const isLoggedIn = ref(Boolean(localStorage.getItem("conelli_admin_auth")));
 const themeMode = ref(localStorage.getItem(themeKey) || "light");
 const isLoginRoute = computed(() => route.path === "/login");
 const hideFooter = computed(() => route.path === "/dashboard/messages" || route.path === "/dashboard/notifications");
@@ -18,13 +17,13 @@ const isDarkTheme = computed(() => themeMode.value === "dark");
 let realtimeClient;
 
 const handleLogin = (credentials) => {
-  localStorage.setItem(authKey, JSON.stringify({ email: credentials.email, role: credentials.role }));
+  setCurrentUser(credentials);
   isLoggedIn.value = true;
   router.replace(route.query.redirect?.toString() || "/dashboard");
 };
 
 const handleLogout = () => {
-  localStorage.removeItem(authKey);
+  clearCurrentUser();
   isLoggedIn.value = false;
   realtimeClient?.close();
   realtimeClient = null;
@@ -41,7 +40,7 @@ const startRealtime = () => {
   if (realtimeClient || !isLoggedIn.value) return;
   const user = store.currentUser.value;
   realtimeClient = createRealtimeClient({
-    role: "admin",
+    role: String(user.role || "admin").toLowerCase(),
     id: user.id,
     name: user.name,
     onEvent: applyRealtimeEvent,
