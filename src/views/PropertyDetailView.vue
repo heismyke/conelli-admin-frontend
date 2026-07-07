@@ -11,7 +11,7 @@
       </div>
     </div>
 
-    <div class="grid gap-6 px-6 py-8 lg:grid-cols-[1.2fr_0.8fr] lg:px-10">
+    <div class="grid items-start gap-6 px-6 py-8 lg:grid-cols-[1.2fr_0.8fr] lg:px-10">
       <form ref="progressSection" class="card grid gap-4 p-5" @submit.prevent="saveProperty">
         <div class="flex items-center justify-between gap-4">
           <h2 class="font-display text-xl font-light text-stone-900">Core fields</h2>
@@ -51,7 +51,7 @@
         </div>
       </form>
 
-      <section ref="documentsSection" class="card p-5">
+      <section ref="documentsSection" class="card self-start p-5">
         <h2 class="font-display mb-4 text-xl font-light text-stone-900">Documents</h2>
         <form class="mb-4 grid gap-3" @submit.prevent="saveDocument">
           <input ref="documentInput" v-model="docForm.title" class="field" placeholder="Document title" />
