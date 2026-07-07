@@ -67,8 +67,10 @@ onBeforeUnmount(() => realtimeClient?.close());
   <div class="app-shell min-h-screen text-stone-950" :class="[{ 'lg:flex': !isLoginRoute }, isDarkTheme ? 'theme-dark' : 'theme-light']">
     <AppSidebar v-if="!isLoginRoute" :is-logged-in="isLoggedIn" :theme-mode="themeMode" @logout="handleLogout" @toggle-theme="toggleTheme" />
 
-    <div class="content-shell min-w-0 flex-1">
-      <router-view @login="handleLogin" />
+    <div class="content-shell flex min-w-0 flex-1 flex-col">
+      <div class="route-shell flex min-h-0 flex-1 flex-col">
+        <router-view @login="handleLogin" />
+      </div>
 
       <footer v-if="!isLoginRoute && !hideFooter" class="border-t border-stone-200 px-5 py-8 lg:px-10">
         <div class="mx-auto flex max-w-7xl flex-col gap-4 text-xs font-light text-stone-500 md:flex-row md:items-center md:justify-between">
