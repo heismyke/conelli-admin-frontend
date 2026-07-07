@@ -2,7 +2,6 @@
   <aside class="sidebar-shell">
     <div class="sidebar-brand">
       <img src="/assets/logo.png" alt="Conelli Engineering" class="h-20 w-full object-contain object-left" />
-      <div class="font-body mt-2 text-[10px] font-semibold uppercase tracking-[0.22em] text-slate-400">Admin Console</div>
     </div>
 
     <nav class="sidebar-nav">
