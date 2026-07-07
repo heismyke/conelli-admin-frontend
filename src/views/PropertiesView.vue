@@ -92,9 +92,8 @@
             <input v-model.number="form.progressPercent" class="field" min="0" max="100" type="number" placeholder="Progress %" />
             <input v-model="form.estCompletionDate" class="field" type="date" />
             <div class="md:col-span-2">
-              <label class="label mb-2 block">Cover image</label>
-              <div class="grid gap-3 md:grid-cols-[1fr_auto]">
-                <input v-model="form.coverImageUrl" class="field" placeholder="Cover image URL" />
+              <div class="mb-2 flex items-center justify-between gap-3">
+                <label class="label block">Cover image</label>
                 <label class="btn-outline min-h-10 cursor-pointer">
                   <ImagePlus class="h-4 w-4" />
                   {{ coverUploading ? "Uploading..." : "Upload image" }}
@@ -103,6 +102,9 @@
               </div>
               <div v-if="form.coverImageUrl" class="mt-3 h-32 overflow-hidden rounded-2xl border border-stone-200 bg-stone-100">
                 <img :src="form.coverImageUrl" alt="" class="h-full w-full object-cover" />
+              </div>
+              <div v-else class="mt-3 rounded-2xl border border-dashed border-stone-200 bg-stone-50 px-4 py-6 text-sm text-stone-500">
+                Upload a cover image for the project.
               </div>
             </div>
             <textarea v-model="form.description" class="field md:col-span-2" rows="4" placeholder="Description"></textarea>
