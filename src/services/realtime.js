@@ -1,5 +1,8 @@
-const apiBase = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
-const defaultWsUrl = apiBase.replace(/^http/, "ws").replace(/\/$/, "") + "/realtime/ws";
+const apiBase = import.meta.env.VITE_API_BASE_URL || (import.meta.env.PROD ? "/api" : "http://localhost:8000");
+const cleanApiBase = apiBase.replace(/\/$/, "");
+const defaultWsUrl = cleanApiBase.startsWith("http")
+  ? cleanApiBase.replace(/^http/, "ws") + "/realtime/ws"
+  : (window.location.protocol === "https:" ? "wss" : "ws") + "://" + window.location.host + cleanApiBase + "/realtime/ws";
 const wsUrl = import.meta.env.VITE_WS_URL || defaultWsUrl;
 
 export const createRealtimeClient = ({ role, name, id, onEvent, onStatus }) => {
