@@ -91,13 +91,49 @@
             </select>
             <input v-model.number="form.progressPercent" class="field" min="0" max="100" type="number" placeholder="Progress %" />
             <input v-model="form.estCompletionDate" class="field" type="date" />
-            <input v-model="form.coverImageUrl" class="field md:col-span-2" placeholder="Cover image URL" />
+            <div class="md:col-span-2">
+              <label class="label mb-2 block">Cover image</label>
+              <div class="grid gap-3 md:grid-cols-[1fr_auto]">
+                <input v-model="form.coverImageUrl" class="field" placeholder="Cover image URL" />
+                <label class="btn-outline min-h-10 cursor-pointer">
+                  <ImagePlus class="h-4 w-4" />
+                  {{ coverUploading ? "Uploading..." : "Upload image" }}
+                  <input class="sr-only" type="file" accept="image/*" :disabled="coverUploading || saving" @change="uploadCoverImage" />
+                </label>
+              </div>
+              <div v-if="form.coverImageUrl" class="mt-3 h-32 overflow-hidden rounded-2xl border border-stone-200 bg-stone-100">
+                <img :src="form.coverImageUrl" alt="" class="h-full w-full object-cover" />
+              </div>
+            </div>
             <textarea v-model="form.description" class="field md:col-span-2" rows="4" placeholder="Description"></textarea>
+
+            <div class="md:col-span-2">
+              <div class="mb-2 flex items-center justify-between gap-3">
+                <label class="label block">Property documents</label>
+                <label class="btn-outline min-h-10 cursor-pointer">
+                  <Upload class="h-4 w-4" />
+                  {{ documentsUploading ? "Uploading..." : "Upload files" }}
+                  <input class="sr-only" type="file" multiple :disabled="documentsUploading || saving" @change="uploadDocuments" />
+                </label>
+              </div>
+              <div v-if="pendingDocuments.length" class="space-y-2 rounded-2xl border border-stone-100 bg-stone-50 p-3">
+                <div v-for="document in pendingDocuments" :key="document.fileUrl" class="flex items-center justify-between gap-3 rounded-xl bg-white px-3 py-2">
+                  <div class="min-w-0">
+                    <p class="truncate text-sm font-medium text-stone-800">{{ document.title }}</p>
+                    <p class="truncate text-xs text-stone-400">{{ document.fileUrl }}</p>
+                  </div>
+                  <button class="text-xs font-semibold text-red-600" type="button" @click="removePendingDocument(document.fileUrl)">Remove</button>
+                </div>
+              </div>
+              <p v-else class="rounded-2xl border border-dashed border-stone-200 px-4 py-5 text-sm text-stone-500">
+                Upload receipts, certificates, progress reports, and other documents for this property.
+              </p>
+            </div>
           </div>
 
           <div class="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
             <button class="btn-outline" type="button" @click="closeCreateModal">Cancel</button>
-            <button class="btn-gold" type="submit" :disabled="saving">{{ saving ? "Saving..." : "Save property" }}</button>
+            <button class="btn-gold" type="submit" :disabled="saving || coverUploading || documentsUploading">{{ saving ? "Saving..." : "Save property" }}</button>
           </div>
         </form>
       </div>
@@ -108,14 +144,17 @@
 <script setup>
 import { computed, reactive, ref, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
-import { Plus, X } from "@lucide/vue";
-import { state, store } from "../stores/adminStore";
+import { ImagePlus, Plus, Upload, X } from "@lucide/vue";
+import { state, store, uploadAdminFile } from "../stores/adminStore";
 
 const showCreate = ref(false);
 const statusFilter = ref("");
 const categoryFilter = ref("");
 const saving = ref(false);
+const coverUploading = ref(false);
+const documentsUploading = ref(false);
 const error = ref("");
+const pendingDocuments = ref([]);
 const router = useRouter();
 const route = useRoute();
 const form = reactive({ title: "", location: "", category: "Real Estate Development", status: "Under Construction", progressPercent: 0, estCompletionDate: "", coverImageUrl: "", description: "" });
@@ -125,6 +164,7 @@ const categories = computed(() => [...new Set(state.properties.map((item) => ite
 const filtered = computed(() => state.properties.filter((item) => (!statusFilter.value || item.status === statusFilter.value) && (!categoryFilter.value || item.category === categoryFilter.value)));
 const resetForm = () => {
   Object.assign(form, { title: "", location: "", category: "Real Estate Development", status: "Under Construction", progressPercent: 0, estCompletionDate: "", coverImageUrl: "", description: "" });
+  pendingDocuments.value = [];
 };
 
 const openCreateModal = () => {
@@ -133,9 +173,51 @@ const openCreateModal = () => {
 };
 
 const closeCreateModal = () => {
-  if (saving.value) return;
+  if (saving.value || coverUploading.value || documentsUploading.value) return;
   error.value = "";
   showCreate.value = false;
+};
+
+const uploadCoverImage = async (event) => {
+  const [file] = event.target.files || [];
+  event.target.value = "";
+  if (!file) return;
+
+  coverUploading.value = true;
+  error.value = "";
+  try {
+    form.coverImageUrl = await uploadAdminFile(file, "properties/covers");
+  } catch (err) {
+    error.value = err.message || "Unable to upload cover image.";
+  } finally {
+    coverUploading.value = false;
+  }
+};
+
+const uploadDocuments = async (event) => {
+  const files = [...(event.target.files || [])];
+  event.target.value = "";
+  if (!files.length) return;
+
+  documentsUploading.value = true;
+  error.value = "";
+  try {
+    for (const file of files) {
+      const fileUrl = await uploadAdminFile(file, "properties/documents");
+      pendingDocuments.value.push({
+        title: file.name.replace(/\.[^.]+$/, ""),
+        fileUrl,
+      });
+    }
+  } catch (err) {
+    error.value = err.message || "Unable to upload property documents.";
+  } finally {
+    documentsUploading.value = false;
+  }
+};
+
+const removePendingDocument = (fileUrl) => {
+  pendingDocuments.value = pendingDocuments.value.filter((document) => document.fileUrl !== fileUrl);
 };
 
 watch(
@@ -151,6 +233,14 @@ const createProperty = async () => {
   error.value = "";
   try {
     const created = await store.createProperty(form);
+    for (const document of pendingDocuments.value) {
+      await store.addDocument({
+        propertyId: created.id,
+        investorId: null,
+        title: document.title,
+        fileUrl: document.fileUrl,
+      });
+    }
     resetForm();
     showCreate.value = false;
     router.push(`/dashboard/properties/${created.id}`);

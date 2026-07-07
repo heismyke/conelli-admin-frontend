@@ -152,6 +152,30 @@ export const loginStaff = async (credentials) => {
   });
 };
 
+export const uploadAdminFile = async (file, folder = "admin") => {
+  const presign = await request("/admin/uploads/presign", {
+    method: "POST",
+    body: JSON.stringify({
+      fileName: file.name,
+      contentType: file.type || "application/octet-stream",
+      folder,
+    }),
+  });
+
+  const response = await fetch(presign.uploadUrl, {
+    method: presign.method || "PUT",
+    headers: {
+      "Content-Type": file.type || "application/octet-stream",
+    },
+    body: file,
+  });
+  if (!response.ok) {
+    throw new Error(`Upload failed with status ${response.status}`);
+  }
+
+  return presign.fileUrl;
+};
+
 export const adminDataReady = loadAdminData().catch((error) => {
   console.error("Failed to load admin data from backend:", error);
   return state;
