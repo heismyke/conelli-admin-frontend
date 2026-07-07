@@ -24,12 +24,16 @@ export const applyRealtimeEvent = (event) => {
     return;
   }
   if (event.type === "message") {
-    realtimeState.messages.push(event);
-    realtimeState.unreadMessages += 1;
+    if (!realtimeState.messages.some((item) => item.id === event.id)) {
+      realtimeState.messages.push(event);
+      realtimeState.unreadMessages += 1;
+    }
   }
   if (event.type === "notification") {
-    realtimeState.notifications.unshift(event);
-    realtimeState.unreadNotifications += 1;
+    if (!realtimeState.notifications.some((item) => item.id === event.id)) {
+      realtimeState.notifications.unshift(event);
+      realtimeState.unreadNotifications += 1;
+    }
   }
 };
 
