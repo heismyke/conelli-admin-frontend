@@ -97,8 +97,8 @@
 <script setup>
 import { computed, nextTick, onMounted, ref, watch } from "vue";
 import { ArrowLeft, MessageCircle, Send } from "@lucide/vue";
-import { state } from "../stores/adminStore";
-import { investorRoomId, investorRoomPrefix, markMessagesRead, realtimeState } from "../stores/realtimeStore";
+import { state, store } from "../stores/adminStore";
+import { investorRoomPrefix, markMessagesRead, realtimeState, staffInvestorRoomId } from "../stores/realtimeStore";
 
 const draft = ref("");
 const selectedInvestorId = ref("");
@@ -126,9 +126,10 @@ const conversations = computed(() => state.investors.map((investor) => {
 }));
 
 const selectedInvestor = computed(() => state.investors.find((investor) => investor.id === selectedInvestorId.value) || null);
+const currentUser = computed(() => store.currentUser.value);
 const selectedRoomPrefix = computed(() => selectedInvestor.value ? investorRoomPrefix(selectedInvestor.value.id) : "");
 const roomMessages = computed(() => sortedMessages.value.filter((message) => selectedRoomPrefix.value && String(message.roomId || "").startsWith(selectedRoomPrefix.value)));
-const selectedRoomId = computed(() => roomMessages.value.at(-1)?.roomId || (selectedInvestor.value ? investorRoomId(selectedInvestor.value.id) : ""));
+const selectedRoomId = computed(() => selectedInvestor.value ? staffInvestorRoomId(selectedInvestor.value.id, currentUser.value?.id || "admin") : "");
 
 const scrollMessagesToBottom = async () => {
   await nextTick();
