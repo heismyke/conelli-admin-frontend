@@ -4,7 +4,7 @@ import { useRoute, useRouter } from "vue-router";
 import AppSidebar from "./components/AppSidebar.vue";
 import { clearCurrentUser, loadAdminData, setCurrentUser, store } from "./stores/adminStore";
 import { createRealtimeClient } from "./services/realtime";
-import { applyRealtimeEvent, realtimeState } from "./stores/realtimeStore";
+import { applyRealtimeEvent, realtimeState, setRealtimeIdentity } from "./stores/realtimeStore";
 
 const route = useRoute();
 const router = useRouter();
@@ -39,8 +39,10 @@ const toggleTheme = () => {
 const startRealtime = () => {
   if (realtimeClient || !isLoggedIn.value) return;
   const user = store.currentUser.value;
+  const role = String(user.role || "admin").toLowerCase();
+  setRealtimeIdentity({ id: user.id, role });
   realtimeClient = createRealtimeClient({
-    role: String(user.role || "admin").toLowerCase(),
+    role,
     id: user.id,
     name: user.name,
     onEvent: applyRealtimeEvent,
