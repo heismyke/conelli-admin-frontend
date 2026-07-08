@@ -3,7 +3,7 @@ const cleanApiBase = apiBase.replace(/\/$/, "");
 const defaultWsUrl = cleanApiBase.startsWith("http")
   ? cleanApiBase.replace(/^http/, "ws") + "/realtime/ws"
   : (window.location.protocol === "https:" ? "wss" : "ws") + "://" + window.location.host + cleanApiBase + "/realtime/ws";
-const wsUrl = import.meta.env.VITE_WS_URL || (import.meta.env.PROD ? "" : defaultWsUrl);
+const wsUrl = import.meta.env.VITE_WS_URL || defaultWsUrl;
 
 const request = async (path, options = {}) => {
   const response = await fetch(`${cleanApiBase}${path}`, {
@@ -15,16 +15,6 @@ const request = async (path, options = {}) => {
 };
 
 export const createRealtimeClient = ({ role, name, id, onEvent, onStatus }) => {
-  if (!wsUrl) {
-    onStatus?.("disabled");
-    return {
-      sendMessage() {
-        return false;
-      },
-      close() {},
-    };
-  }
-
   let socket;
   let reconnectTimer;
   let pollTimer;
