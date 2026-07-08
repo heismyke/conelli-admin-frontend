@@ -1,4 +1,4 @@
-const apiBase = import.meta.env.VITE_API_BASE_URL || (import.meta.env.PROD ? "/api" : "http://localhost:8000");
+const apiBase = import.meta.env.PROD ? "/api" : (import.meta.env.VITE_API_BASE_URL || "http://localhost:8000");
 const cleanApiBase = apiBase.replace(/\/$/, "");
 const defaultWsUrl = cleanApiBase.startsWith("http")
   ? cleanApiBase.replace(/^http/, "ws") + "/realtime/ws"
