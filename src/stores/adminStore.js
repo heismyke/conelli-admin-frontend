@@ -11,9 +11,16 @@ const readStoredAuth = () => {
   }
 };
 
+
 const uid = (prefix) => `${prefix}_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
 const nowIso = () => new Date().toISOString();
 const today = () => new Date().toISOString().slice(0, 10);
+const slugify = (value) => String(value || "")
+  .toLowerCase()
+  .replace(/&/g, " and ")
+  .replace(/[^a-z0-9]+/g, "-")
+  .replace(/^-+|-+$/g, "")
+  .slice(0, 80);
 const publicProjectFields = {
   prop_3: {
     publicDescription: "Comprehensive drainage infrastructure and manhole cover installation project for the Federal Capital Development Authority, enhancing urban water management systems.",
@@ -216,7 +223,15 @@ export const store = {
     if (!authUser) return state.users[0];
     return state.users.find((user) => user.id === authUser.id || user.email === authUser.email) || authUser;
   }),
+  propertySlug: (property) => slugify(property?.title) || property?.id || "property",
+  propertyPath(property) {
+    return `/dashboard/properties/${this.propertySlug(property)}`;
+  },
   propertyById: (id) => state.properties.find((item) => item.id === id),
+  propertyByRouteParam(param) {
+    const value = String(param || "");
+    return state.properties.find((item) => item.id === value) || state.properties.find((item) => slugify(item.title) === value);
+  },
   investorById: (id) => state.investors.find((item) => item.id === id),
   updatesForProperty: (id) => state.updates.filter((item) => item.propertyId === id).sort((a, b) => b.postedAt.localeCompare(a.postedAt)),
   milestonesForProperty: (id) => state.milestones.filter((item) => item.propertyId === id),

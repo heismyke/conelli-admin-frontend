@@ -5,8 +5,7 @@
       <div class="absolute inset-0 opacity-45" style="background-image: url('/assets/home.png'); background-size: cover; background-position: center;"></div>
       <div class="absolute inset-0 bg-gradient-to-r from-black/85 via-black/55 to-black/20"></div>
       <div class="relative z-10 flex flex-col gap-3">
-        <img src="/assets/logo.png" alt="Conelli Engineering" class="brand-logo-light h-24 w-72 object-contain object-left" />
-        <div class="font-body text-[10px] uppercase tracking-[0.28em] text-white/70">Admin Console</div>
+        <img src="/reddlogo.png" alt="Redd" class="brand-logo-light h-36 w-96 object-contain object-left" />
       </div>
       <div class="relative z-10">
         <p class="font-body mb-6 text-[10px] uppercase tracking-[0.3em] text-white/60">Internal operations</p>
@@ -25,14 +24,14 @@
     <div class="flex flex-1 items-center justify-center bg-stone-50 p-8">
       <div class="w-full max-w-md">
         <div class="mb-10">
-          <h1 class="font-display mb-2 text-4xl font-light text-stone-900">Staff login</h1>
-          <p class="font-body text-sm text-stone-500">Use your Conelli staff account to manage investor-facing data.</p>
+          <h1 class="font-display mb-2 text-4xl font-light text-stone-900">Redd login</h1>
+          <p class="font-body text-sm text-stone-500">Sign in to manage investor-facing property data.</p>
         </div>
 
         <form class="space-y-5" @submit.prevent="handleLogin">
           <div>
             <label class="label mb-2 block">Email address</label>
-            <input v-model="email" type="email" class="field" placeholder="admin@conelliengineering.com" required />
+            <input v-model="email" type="email" class="field" placeholder="admin@example.com" required />
           </div>
           <div>
             <label class="label mb-2 block">Password</label>

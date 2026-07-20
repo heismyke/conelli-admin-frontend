@@ -1,7 +1,7 @@
 <template>
   <aside class="sidebar-shell">
     <div class="sidebar-brand">
-      <img src="/assets/logo.png" alt="Conelli Engineering" class="h-20 w-full object-contain object-left" />
+      <img src="/reddlogo.png" alt="Redd" class="brand-logo-dark h-28 w-full object-contain object-left" />
     </div>
 
     <nav class="sidebar-nav">
@@ -44,10 +44,6 @@
 
     <div class="sidebar-account">
       <div class="space-y-3">
-        <button class="theme-toggle-btn" type="button" @click="$emit('toggle-theme')">
-          <component :is="themeMode === 'dark' ? Sun : Moon" class="h-4 w-4" />
-          {{ themeMode === "dark" ? "Light mode" : "Dark mode" }}
-        </button>
         <button class="flex w-full items-center gap-3 rounded-2xl text-left transition hover:bg-slate-50" type="button" @click="$router.push('/dashboard/settings')">
           <div class="h-11 w-11 flex-shrink-0 overflow-hidden rounded-full border border-slate-200 bg-slate-100">
             <img v-if="user.profileImageUrl" :src="user.profileImageUrl" alt="" class="h-full w-full object-cover" />
@@ -69,14 +65,13 @@
 
 <script setup>
 import { computed } from "vue";
-import { Bell, Building2, LayoutDashboard, LogOut, MessageSquare, Moon, Sun, UserCog, Users } from "@lucide/vue";
+import { Bell, Building2, LayoutDashboard, LogOut, MessageSquare, UserCog, Users } from "@lucide/vue";
 import { isAdmin, store } from "../stores/adminStore";
 import { realtimeState } from "../stores/realtimeStore";
 
-defineEmits(["logout", "toggle-theme"]);
+defineEmits(["logout"]);
 defineProps({
   isLoggedIn: { type: Boolean, required: true },
-  themeMode: { type: String, required: true },
 });
 
 const user = computed(() => store.currentUser.value);

@@ -1,20 +1,22 @@
 <template>
-  <main v-if="property" class="flex-1 overflow-auto bg-stone-50">
-    <div class="border-b border-stone-200 bg-white px-6 py-6 lg:px-10">
+  <main v-if="property" class="property-detail-page flex-1 overflow-auto">
+    <div class="property-detail-header px-6 py-7 lg:px-10">
+      <div class="mx-auto max-w-[1480px]">
       <button class="mb-2 text-xs text-stone-500 hover:text-stone-900" @click="$router.push('/dashboard/properties')">← Properties</button>
       <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div>
-          <h1 class="font-display text-3xl font-light text-stone-900">{{ property.title }}</h1>
+          <h1 class="font-display text-3xl font-semibold tracking-tight text-stone-950">{{ property.title }}</h1>
           <p class="mt-1 text-sm text-stone-500">{{ property.location }} · {{ property.category }}</p>
         </div>
         <span class="badge">{{ property.status }} · {{ property.progressPercent }}%</span>
       </div>
+      </div>
     </div>
 
-    <div class="grid items-start gap-6 px-6 py-8 lg:grid-cols-[1.2fr_0.8fr] lg:px-10">
-      <form ref="progressSection" class="card grid gap-4 p-5" @submit.prevent="saveProperty">
+    <div class="property-detail-grid mx-auto grid max-w-[1480px] items-start gap-6 px-6 py-8 lg:grid-cols-[minmax(0,1.35fr)_minmax(360px,0.65fr)] lg:px-10">
+      <form ref="progressSection" class="property-detail-panel grid gap-5 p-6" @submit.prevent="saveProperty">
         <div class="flex items-center justify-between gap-4">
-          <h2 class="font-display text-xl font-light text-stone-900">Core fields</h2>
+          <h2 class="font-display text-xl font-semibold tracking-tight text-stone-950">Core fields</h2>
           <button class="text-xs font-semibold text-red-600" type="button" @click="deleteProperty">Delete property</button>
         </div>
         <div v-if="error" class="border border-red-200 bg-red-50 px-4 py-3 text-xs text-red-600">{{ error }}</div>
@@ -37,14 +39,14 @@
               <button v-if="edit.coverImageUrl" class="btn-outline px-4 py-2 text-xs" type="button" :disabled="saving" @click="clearCoverImage">Remove cover</button>
             </div>
           </div>
-          <div class="h-44 overflow-hidden rounded-2xl border border-stone-200 bg-stone-100">
+          <div class="h-52 overflow-hidden rounded-[1.25rem] border border-stone-200 bg-stone-100">
             <img v-if="edit.coverImageUrl" :src="edit.coverImageUrl" class="h-full w-full object-cover" alt="" />
             <div v-else class="grid h-full place-items-center text-sm text-stone-400">No cover image uploaded.</div>
           </div>
         </div>
         <div><label class="label mb-2 block">Description</label><textarea v-model="edit.description" rows="4" class="field"></textarea></div>
-        <div class="border-t border-stone-100 pt-4">
-          <h3 class="font-display mb-4 text-lg font-light text-stone-900">Public project content</h3>
+        <div class="border-t border-stone-100 pt-5">
+          <h3 class="font-display mb-4 text-lg font-semibold tracking-tight text-stone-950">Public project content</h3>
           <div class="grid gap-4 lg:grid-cols-2">
             <div><label class="label mb-2 block">Client</label><input v-model="edit.client" class="field" /></div>
             <div><label class="label mb-2 block">Year</label><input v-model="edit.year" class="field" /></div>
@@ -60,8 +62,8 @@
                 </label>
               </div>
               <div v-if="galleryImages.length" class="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-                <article v-for="(image, index) in galleryImages" :key="`${image}-${index}`" class="overflow-hidden rounded-2xl border border-stone-100 bg-white">
-                  <div class="h-32 bg-stone-100">
+                <article v-for="(image, index) in galleryImages" :key="`${image}-${index}`" class="property-detail-gallery-card overflow-hidden">
+                  <div class="h-36 bg-stone-100">
                     <img :src="image" alt="" class="h-full w-full object-cover" />
                   </div>
                   <div class="flex items-center justify-between gap-2 px-3 py-2 text-xs">
@@ -82,8 +84,8 @@
         </div>
       </form>
 
-      <section ref="documentsSection" class="card self-start p-5">
-        <h2 class="font-display mb-4 text-xl font-light text-stone-900">Documents</h2>
+      <section ref="documentsSection" class="property-detail-panel self-start p-6">
+        <h2 class="font-display mb-4 text-xl font-semibold tracking-tight text-stone-950">Documents</h2>
         <form class="mb-4 grid gap-3" @submit.prevent="saveDocument">
           <input ref="documentInput" v-model="docForm.title" class="field" placeholder="Document title" />
           <input v-model="docForm.fileUrl" class="field" placeholder="File URL or uploaded path" />
@@ -96,7 +98,7 @@
           </div>
         </form>
         <div class="space-y-2">
-          <div v-for="doc in documents" :key="doc.id" class="flex items-center justify-between border border-stone-100 px-3 py-2">
+          <div v-for="doc in documents" :key="doc.id" class="property-detail-list-row flex items-center justify-between gap-3 px-4 py-3">
             <div class="min-w-0">
               <p class="truncate text-sm font-medium text-stone-800">{{ doc.title }}</p>
               <p class="text-xs text-stone-400">{{ doc.fileUrl }}</p>
@@ -110,9 +112,9 @@
       </section>
     </div>
 
-    <div class="grid gap-6 px-6 pb-8 lg:grid-cols-2 lg:px-10">
-      <section ref="updatesSection" class="card p-5">
-        <h2 class="font-display mb-4 text-xl font-light text-stone-900">Updates</h2>
+    <div class="mx-auto grid max-w-[1480px] gap-6 px-6 pb-8 lg:grid-cols-2 lg:px-10">
+      <section ref="updatesSection" class="property-detail-panel p-6">
+        <h2 class="font-display mb-4 text-xl font-semibold tracking-tight text-stone-950">Updates</h2>
         <form class="mb-4 grid gap-3" @submit.prevent="saveUpdate">
           <input ref="updateInput" v-model="updateForm.title" class="field" placeholder="Update title" />
           <textarea v-model="updateForm.body" class="field" rows="3" placeholder="Update body"></textarea>
@@ -122,7 +124,7 @@
           </div>
         </form>
         <div class="space-y-3">
-          <article v-for="update in updates" :key="update.id" class="border-b border-stone-100 pb-3">
+          <article v-for="update in updates" :key="update.id" class="property-detail-feed-item pb-4">
             <p class="text-sm font-medium text-stone-900">{{ update.title }}</p>
             <p class="mt-1 text-xs leading-relaxed text-stone-500">{{ update.body }}</p>
             <div class="mt-2 flex gap-3 text-xs">
@@ -133,8 +135,8 @@
         </div>
       </section>
 
-      <section class="card p-5">
-        <h2 class="font-display mb-4 text-xl font-light text-stone-900">Milestones</h2>
+      <section class="property-detail-panel p-6">
+        <h2 class="font-display mb-4 text-xl font-semibold tracking-tight text-stone-950">Milestones</h2>
         <form class="mb-4 grid gap-3" @submit.prevent="saveMilestone">
           <input v-model="milestoneForm.title" class="field" placeholder="Milestone title" />
           <input v-model="milestoneForm.plannedDate" class="field" type="date" />
@@ -149,7 +151,7 @@
           </div>
         </form>
         <div class="space-y-2">
-          <div v-for="milestone in milestones" :key="milestone.id" class="border border-stone-100 px-3 py-2">
+          <div v-for="milestone in milestones" :key="milestone.id" class="property-detail-list-row px-4 py-3">
             <div class="flex items-center justify-between gap-3">
               <p class="text-sm font-medium text-stone-800">{{ milestone.title }}</p>
               <div class="flex gap-3 text-xs">
@@ -172,7 +174,7 @@ import { store, uploadAdminFile } from "../stores/adminStore";
 
 const route = useRoute();
 const router = useRouter();
-const property = computed(() => store.propertyById(route.params.id));
+const property = computed(() => store.propertyByRouteParam(route.params.id));
 const edit = reactive({});
 const updateForm = reactive({ id: "", propertyId: "", title: "", body: "" });
 const milestoneForm = reactive({ id: "", propertyId: "", title: "", plannedDate: "", completedDate: null, status: "pending" });
@@ -217,11 +219,14 @@ const runSave = async (action) => {
   }
 };
 
-const saveProperty = () => runSave(() => store.updateProperty(property.value.id, {
-  ...edit,
-  tags: edit.tagsText,
-  galleryImages: edit.galleryImagesText,
-}));
+const saveProperty = async () => {
+  await runSave(() => store.updateProperty(property.value.id, {
+    ...edit,
+    tags: edit.tagsText,
+    galleryImages: edit.galleryImagesText,
+  }));
+  if (!error.value) router.replace(store.propertyPath(property.value));
+};
 const resetPropertyForm = () => {
   if (property.value) Object.assign(edit, property.value, {
     tagsText: (property.value.tags || []).join(", "),
@@ -308,6 +313,16 @@ const deleteUpdate = async (id) => {
   await runSave(() => store.deleteUpdate(id));
   if (!error.value && updateForm.id === id) resetUpdateForm();
 };
+
+watch(
+  property,
+  (current) => {
+    if (!current) return;
+    const canonicalPath = store.propertyPath(current);
+    if (route.path !== canonicalPath) router.replace({ path: canonicalPath, query: route.query });
+  },
+  { immediate: true },
+);
 
 watch(
   () => route.query.focus,
