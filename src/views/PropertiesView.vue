@@ -14,12 +14,12 @@
     </div>
 
     <div class="flex flex-1 flex-col px-6 py-8 lg:px-10">
-      <div class="mb-5 grid shrink-0 gap-3 lg:grid-cols-2">
-        <select v-model="statusFilter" class="field">
+      <div class="mb-5 flex shrink-0 flex-wrap gap-3">
+        <select v-model="statusFilter" class="field property-filter">
           <option value="">All statuses</option>
           <option v-for="status in statuses" :key="status">{{ status }}</option>
         </select>
-        <select v-model="categoryFilter" class="field">
+        <select v-model="categoryFilter" class="field property-filter">
           <option value="">All categories</option>
           <option v-for="category in categories" :key="category">{{ category }}</option>
         </select>
@@ -39,7 +39,7 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-for="property in filtered" :key="property.id" class="cursor-pointer border-b border-stone-100 hover:bg-stone-50/70" @click="$router.push(`/dashboard/properties/${property.id}`)">
+              <tr v-for="property in filtered" :key="property.id" class="cursor-pointer border-b border-stone-100 hover:bg-stone-50/70" @click="$router.push(store.propertyPath(property))">
                 <td class="px-5 py-4 text-sm font-medium text-stone-900">{{ property.title }}</td>
                 <td class="px-5 py-4 text-sm text-stone-600">{{ property.location }}</td>
                 <td class="px-5 py-4 text-sm text-stone-600">{{ property.category }}</td>
@@ -245,7 +245,7 @@ const createProperty = async () => {
     }
     resetForm();
     showCreate.value = false;
-    router.push(`/dashboard/properties/${created.id}`);
+    router.push(store.propertyPath(created));
   } catch (err) {
     error.value = err.message || "Unable to save property.";
   } finally {

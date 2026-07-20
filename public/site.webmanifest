@@ -1,14 +1,14 @@
 {
-  "name": "Conelli Admin Console",
-  "short_name": "Conelli Admin",
-  "description": "Internal Conelli Engineering admin console for property, investor, staff, and project communication management.",
+  "name": "Redd Admin Console",
+  "short_name": "Redd Admin",
+  "description": "Internal Redd admin console for property, investor, staff, and project communication management.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#edf3f8",
   "theme_color": "#111827",
   "icons": [
     {
-      "src": "/assets/logo.png",
+      "src": "/reddlogo.png",
       "sizes": "585x427",
       "type": "image/png",
       "purpose": "any"

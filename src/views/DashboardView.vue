@@ -65,7 +65,7 @@
       </div>
 
       <div class="mb-12">
-        <h1 class="max-w-4xl text-4xl font-semibold tracking-tight lg:text-5xl">Welcome, {{ firstName }}. Today's a project day.</h1>
+        <h1 class="max-w-4xl text-4xl font-semibold tracking-tight lg:text-5xl">Welcome, {{ firstName }}.</h1>
       </div>
 
       <div class="flex flex-col gap-8 xl:flex-row xl:items-end xl:justify-between">
@@ -117,7 +117,7 @@
             <ChevronRight class="h-5 w-5" />
           </button>
           <div class="p-4">
-            <button v-for="property in properties.slice(0, 4)" :key="property.id" class="flex w-full items-center gap-4 rounded-2xl px-2 py-3 text-left hover:bg-slate-50" @click="$router.push(`/dashboard/properties/${property.id}`)">
+            <button v-for="property in properties.slice(0, 4)" :key="property.id" class="flex w-full items-center gap-4 rounded-2xl px-2 py-3 text-left hover:bg-slate-50" @click="$router.push(store.propertyPath(property))">
               <div class="grid h-12 w-12 flex-shrink-0 place-items-center rounded-2xl bg-slate-100">
                 <Building2 class="h-6 w-6 text-slate-900" />
               </div>
@@ -244,11 +244,12 @@ const shiftTimeline = (direction) => {
 
 const firstPropertyPath = (focus) => {
   const first = properties.value[0];
-  return first ? { path: `/dashboard/properties/${first.id}`, query: { focus } } : { path: "/dashboard/properties", query: { mode: "create" } };
+  return first ? { path: store.propertyPath(first), query: { focus } } : { path: "/dashboard/properties", query: { mode: "create" } };
 };
 
 const updatePropertyPath = (propertyId, focus) => {
-  return propertyId ? { path: `/dashboard/properties/${propertyId}`, query: { focus } } : firstPropertyPath(focus);
+  const property = state.properties.find((item) => item.id === propertyId);
+  return property ? { path: store.propertyPath(property), query: { focus } } : firstPropertyPath(focus);
 };
 
 const runSearch = () => {
@@ -257,7 +258,7 @@ const runSearch = () => {
   const lower = term.toLowerCase();
   const property = state.properties.find((item) => [item.title, item.location, item.category, item.status].some((value) => String(value || "").toLowerCase().includes(lower)));
   if (property) {
-    router.push(`/dashboard/properties/${property.id}`);
+    router.push(store.propertyPath(property));
     return;
   }
   const investor = state.investors.find((item) => [item.name, item.email, item.status].some((value) => String(value || "").toLowerCase().includes(lower)));
