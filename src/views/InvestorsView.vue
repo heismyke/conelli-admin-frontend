@@ -153,6 +153,93 @@
                 <p v-if="investorDocuments.length === 0" class="text-xs text-stone-500">No investor documents uploaded.</p>
               </div>
             </div>
+
+            <section class="lg:col-span-2">
+              <div class="mb-3 flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <h3 class="label mb-1">Payments and receipts</h3>
+                  <p class="text-xs text-stone-500">Capture homeowner payments and attach receipts to each payment record.</p>
+                </div>
+                <span class="badge">{{ selectedPropertyPayments.length }} payments</span>
+              </div>
+
+              <div v-if="assignedProperties.length" class="grid gap-4 lg:grid-cols-[320px_1fr]">
+                <form class="grid gap-3 rounded-2xl border border-stone-100 bg-stone-50 p-4" @submit.prevent="savePayment">
+                  <label>
+                    <span class="label mb-2 block">Property</span>
+                    <select v-model="paymentForm.propertyId" class="field">
+                      <option v-for="property in assignedProperties" :key="property.id" :value="property.id">
+                        {{ property.title }}
+                      </option>
+                    </select>
+                  </label>
+                  <label>
+                    <span class="label mb-2 block">Description</span>
+                    <input v-model="paymentForm.description" class="field" placeholder="Initial property payment" />
+                  </label>
+                  <div class="grid gap-3 sm:grid-cols-2">
+                    <label>
+                      <span class="label mb-2 block">Amount</span>
+                      <input v-model.number="paymentForm.amount" class="field" type="number" min="0" placeholder="0" />
+                    </label>
+                    <label>
+                      <span class="label mb-2 block">Date</span>
+                      <input v-model="paymentForm.paymentDate" class="field" type="date" />
+                    </label>
+                  </div>
+                  <label>
+                    <span class="label mb-2 block">Status</span>
+                    <select v-model="paymentForm.status" class="field">
+                      <option value="paid">paid</option>
+                      <option value="pending">pending</option>
+                      <option value="failed">failed</option>
+                    </select>
+                  </label>
+                  <label class="btn-outline cursor-pointer justify-center">
+                    <Upload class="h-4 w-4" />
+                    {{ receiptUploadingId === "new" ? "Uploading..." : paymentForm.receiptUrl ? "Replace receipt" : "Attach receipt" }}
+                    <input class="sr-only" type="file" accept="image/*,.pdf" :disabled="receiptUploadingId === 'new' || saving" @change="uploadNewPaymentReceipt" />
+                  </label>
+                  <p v-if="paymentForm.receiptUrl" class="truncate text-xs text-stone-500">{{ paymentForm.receiptUrl }}</p>
+                  <div class="grid gap-3 sm:grid-cols-2">
+                    <button class="btn-gold" type="submit" :disabled="saving || receiptUploadingId === 'new'">
+                      <Save class="h-4 w-4" />
+                      {{ paymentForm.id ? "Save payment" : "Add payment" }}
+                    </button>
+                    <button class="btn-outline" type="button" @click="resetPaymentForm">Clear</button>
+                  </div>
+                </form>
+
+                <div class="overflow-hidden rounded-2xl border border-stone-100">
+                  <div v-for="payment in selectedPropertyPayments" :key="payment.id" class="grid gap-3 border-b border-stone-100 px-4 py-3 last:border-0 md:grid-cols-[1fr_auto] md:items-center">
+                    <div class="min-w-0">
+                      <p class="truncate text-sm font-medium text-stone-900">{{ payment.description }}</p>
+                      <p class="mt-1 text-xs text-stone-500">{{ formatDate(payment.paymentDate) }} · {{ formatNaira(payment.amount) }}</p>
+                      <a v-if="payment.receiptUrl" class="mt-1 block truncate text-xs font-semibold text-stone-700 underline" :href="payment.receiptUrl" target="_blank" rel="noreferrer">
+                        View receipt
+                      </a>
+                      <p v-else class="mt-1 text-xs text-stone-400">No receipt attached.</p>
+                    </div>
+                    <div class="flex flex-wrap items-center gap-2 md:justify-end">
+                      <span class="badge">{{ payment.status }}</span>
+                      <button class="btn-outline min-h-9 px-3 text-[10px]" type="button" @click="editPayment(payment)">Edit</button>
+                      <label class="btn-outline min-h-9 cursor-pointer px-3 text-[10px]">
+                        {{ receiptUploadingId === payment.id ? "Uploading..." : payment.receiptUrl ? "Replace receipt" : "Attach receipt" }}
+                        <input class="sr-only" type="file" accept="image/*,.pdf" :disabled="receiptUploadingId === payment.id || saving" @change="attachReceiptToPayment(payment, $event)" />
+                      </label>
+                      <button class="text-xs font-semibold text-red-600" type="button" @click="deletePayment(payment.id)">Delete</button>
+                    </div>
+                  </div>
+                  <p v-if="selectedPropertyPayments.length === 0" class="px-4 py-8 text-center text-xs text-stone-500">
+                    No payments recorded for this property yet.
+                  </p>
+                </div>
+              </div>
+
+              <div v-else class="rounded-2xl border border-stone-100 bg-stone-50 px-4 py-5 text-sm text-stone-500">
+                Assign at least one property before recording payments.
+              </div>
+            </section>
           </div>
 
           <div v-else class="rounded-2xl border border-stone-100 bg-stone-50 px-4 py-5 text-sm text-stone-500">
@@ -168,14 +255,17 @@
 import { computed, reactive, ref, watch } from "vue";
 import { useRoute } from "vue-router";
 import { Pencil, Plus, Save, Trash2, Upload } from "@lucide/vue";
-import { state, store } from "../stores/adminStore";
+import { state, store, uploadAdminFile } from "../stores/adminStore";
 
 const blankInvestor = () => ({ id: "", name: "", email: "", phone: "", memberSince: "", status: "active", password: "" });
+const blankPayment = () => ({ id: "", investorId: "", propertyId: "", description: "", amount: null, paymentDate: new Date().toISOString().slice(0, 10), status: "paid", receiptUrl: "" });
 
 const form = reactive(blankInvestor());
 const docForm = reactive({ propertyId: null, investorId: "", title: "", fileUrl: "" });
+const paymentForm = reactive(blankPayment());
 const saving = ref(false);
 const deletingId = ref("");
+const receiptUploadingId = ref("");
 const error = ref("");
 const route = useRoute();
 
@@ -187,12 +277,14 @@ const fillInvestor = (payload) => {
 const selectInvestor = (investor) => {
   fillInvestor(investor);
   Object.assign(docForm, { propertyId: null, investorId: investor.id, title: "", fileUrl: "" });
+  resetPaymentForm(investor.id);
   error.value = "";
 };
 
 const startCreate = () => {
   fillInvestor(blankInvestor());
   Object.assign(docForm, { propertyId: null, investorId: "", title: "", fileUrl: "" });
+  Object.assign(paymentForm, blankPayment());
   error.value = "";
 };
 
@@ -237,14 +329,95 @@ const deleteInvestor = async (investor) => {
 const assignmentCount = (id) => state.investorProperties.filter((item) => item.investorId === id).length;
 const isAssigned = (propertyId) => state.investorProperties.some((item) => item.investorId === form.id && item.propertyId === propertyId);
 const investorDocuments = computed(() => (form.id ? store.documentsForInvestor(form.id) : []));
+const assignedProperties = computed(() => state.investorProperties
+  .filter((item) => item.investorId === form.id)
+  .map((item) => store.propertyById(item.propertyId))
+  .filter(Boolean));
+const selectedPropertyPayments = computed(() => (form.id && paymentForm.propertyId ? store.paymentsForInvestorProperty(form.id, paymentForm.propertyId) : []));
 
-const toggleProperty = (propertyId, assigned) => runSave(() => store.setInvestorProperty(form.id, propertyId, assigned));
+const toggleProperty = async (propertyId, assigned) => {
+  await runSave(() => store.setInvestorProperty(form.id, propertyId, assigned));
+  if (!paymentForm.propertyId || !isAssigned(paymentForm.propertyId)) {
+    paymentForm.propertyId = assignedProperties.value[0]?.id || "";
+  }
+};
 const deleteDocument = (id) => runSave(() => store.deleteDocument(id));
 
 const addInvestorDocument = async () => {
   docForm.investorId = form.id;
   const saved = await runSave(() => store.addDocument(docForm));
   if (!error.value || saved !== null) Object.assign(docForm, { propertyId: null, investorId: form.id, title: "", fileUrl: "" });
+};
+
+const resetPaymentForm = (investorId = form.id) => Object.assign(paymentForm, blankPayment(), {
+  investorId,
+  propertyId: assignedProperties.value[0]?.id || "",
+});
+
+const editPayment = (payment) => Object.assign(paymentForm, {
+  id: payment.id,
+  investorId: payment.investorId,
+  propertyId: payment.propertyId,
+  description: payment.description,
+  amount: payment.amount,
+  paymentDate: payment.paymentDate || payment.date || new Date().toISOString().slice(0, 10),
+  status: payment.status || "paid",
+  receiptUrl: payment.receiptUrl || "",
+});
+
+const savePayment = async () => {
+  paymentForm.investorId = form.id;
+  const saved = await runSave(() => store.upsertPayment(paymentForm));
+  if (saved) resetPaymentForm(form.id);
+};
+
+const deletePayment = async (id) => {
+  const confirmed = window.confirm("Delete this payment record?");
+  if (!confirmed) return;
+  await runSave(() => store.deletePayment(id));
+  if (paymentForm.id === id) resetPaymentForm(form.id);
+};
+
+const uploadNewPaymentReceipt = async (event) => {
+  const [file] = event.target.files || [];
+  if (!file) return;
+  receiptUploadingId.value = "new";
+  error.value = "";
+  try {
+    paymentForm.receiptUrl = await uploadAdminFile(file, `payments/${form.id}/${paymentForm.propertyId || "receipts"}`);
+  } catch (err) {
+    error.value = err.message || "Unable to upload payment receipt.";
+  } finally {
+    receiptUploadingId.value = "";
+    event.target.value = "";
+  }
+};
+
+const attachReceiptToPayment = async (payment, event) => {
+  const [file] = event.target.files || [];
+  if (!file) return;
+  receiptUploadingId.value = payment.id;
+  error.value = "";
+  try {
+    const receiptUrl = await uploadAdminFile(file, `payments/${payment.investorId}/${payment.propertyId}`);
+    await store.upsertPayment({ ...payment, receiptUrl });
+  } catch (err) {
+    error.value = err.message || "Unable to attach payment receipt.";
+  } finally {
+    receiptUploadingId.value = "";
+    event.target.value = "";
+  }
+};
+
+const formatNaira = (value) => new Intl.NumberFormat("en-NG", {
+  style: "currency",
+  currency: "NGN",
+  maximumFractionDigits: 0,
+}).format(Number(value || 0));
+
+const formatDate = (value) => {
+  if (!value) return "Not dated";
+  return new Date(value).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
 };
 
 watch(

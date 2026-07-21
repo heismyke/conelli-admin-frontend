@@ -106,6 +106,12 @@ const seedData = () => ({
     { investorId: "inv_1", propertyId: "prop_2", investmentAmount: 65000000, investmentDate: "2023-01-18" },
     { investorId: "inv_2", propertyId: "prop_3", investmentAmount: 90000000, investmentDate: "2023-07-04" },
   ],
+  payments: [
+    { id: "pay_1", investorId: "inv_1", propertyId: "prop_1", description: "Initial property payment", amount: 60000000, paymentDate: "2022-03-10", status: "paid", receiptUrl: "" },
+    { id: "pay_2", investorId: "inv_1", propertyId: "prop_1", description: "Second installment payment", amount: 54000000, paymentDate: "2022-08-18", status: "paid", receiptUrl: "" },
+    { id: "pay_3", investorId: "inv_1", propertyId: "prop_1", description: "Third installment payment", amount: 45000000, paymentDate: "2023-02-14", status: "paid", receiptUrl: "" },
+    { id: "pay_4", investorId: "inv_1", propertyId: "prop_1", description: "Fourth installment payment", amount: 45000000, paymentDate: "2024-06-20", status: "paid", receiptUrl: "" },
+  ],
   updates: [
     { id: "upd_1", propertyId: "prop_3", title: "Urban water management systems enhanced", body: "Drainage channel checks confirmed stronger runoff control across the active FCDA work areas.", postedAt: "2026-06-22T12:00:00.000Z", authorId: "user_admin" },
     { id: "upd_2", propertyId: "prop_1", title: "Structural works continuing in Lifecamp", body: "The site team completed the latest quality review and confirmed progress against the construction programme.", postedAt: "2026-06-20T12:00:00.000Z", authorId: "user_staff" },
@@ -238,6 +244,9 @@ export const store = {
   documentsForProperty: (id) => state.documents.filter((item) => item.propertyId === id),
   documentsForInvestor: (id) => state.documents.filter((item) => item.investorId === id),
   assignmentsForInvestor: (id) => state.investorProperties.filter((item) => item.investorId === id),
+  paymentsForInvestorProperty: (investorId, propertyId) => state.payments
+    .filter((item) => item.investorId === investorId && item.propertyId === propertyId)
+    .sort((a, b) => String(b.paymentDate || b.date || "").localeCompare(String(a.paymentDate || a.date || ""))),
 
   async createProperty(payload) {
     requireText(payload.title, "Title");
@@ -285,6 +294,7 @@ export const store = {
     if (index === -1) throw new Error("Property not found.");
     state.properties.splice(index, 1);
     state.investorProperties = state.investorProperties.filter((item) => item.propertyId !== id);
+    state.payments = state.payments.filter((item) => item.propertyId !== id);
     state.updates = state.updates.filter((item) => item.propertyId !== id);
     state.milestones = state.milestones.filter((item) => item.propertyId !== id);
     state.documents = state.documents.filter((item) => item.propertyId !== id);
@@ -376,6 +386,7 @@ export const store = {
     if (index === -1) throw new Error("Investor not found.");
     state.investors.splice(index, 1);
     state.investorProperties = state.investorProperties.filter((item) => item.investorId !== id);
+    state.payments = state.payments.filter((item) => item.investorId !== id);
     state.documents = state.documents.filter((item) => item.investorId !== id);
     await saveAdminData();
   },
@@ -383,7 +394,43 @@ export const store = {
   async setInvestorProperty(investorId, propertyId, assigned) {
     const index = state.investorProperties.findIndex((item) => item.investorId === investorId && item.propertyId === propertyId);
     if (assigned && index === -1) state.investorProperties.push({ investorId, propertyId, investmentAmount: null, investmentDate: today() });
-    if (!assigned && index >= 0) state.investorProperties.splice(index, 1);
+    if (!assigned && index >= 0) {
+      state.investorProperties.splice(index, 1);
+      state.payments = state.payments.filter((item) => item.investorId !== investorId || item.propertyId !== propertyId);
+    }
+    await saveAdminData();
+  },
+
+  async upsertPayment(payload) {
+    requireText(payload.investorId, "Investor");
+    requireText(payload.propertyId, "Property");
+    requireText(payload.description, "Payment description");
+    if (!Number(payload.amount || 0)) throw new Error("Payment amount is required.");
+    const record = {
+      id: payload.id || uid("pay"),
+      investorId: payload.investorId,
+      propertyId: payload.propertyId,
+      description: payload.description.trim(),
+      amount: Number(payload.amount || 0),
+      paymentDate: payload.paymentDate || today(),
+      status: payload.status || "paid",
+      receiptUrl: payload.receiptUrl || "",
+    };
+    if (payload.id) {
+      const payment = state.payments.find((item) => item.id === payload.id);
+      if (!payment) throw new Error("Payment not found.");
+      Object.assign(payment, record);
+    } else {
+      state.payments.unshift(record);
+    }
+    await saveAdminData();
+    return record;
+  },
+
+  async deletePayment(id) {
+    const index = state.payments.findIndex((item) => item.id === id);
+    if (index === -1) throw new Error("Payment not found.");
+    state.payments.splice(index, 1);
     await saveAdminData();
   },
 
